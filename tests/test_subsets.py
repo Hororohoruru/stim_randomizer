@@ -8,6 +8,7 @@ Mail: juanjesustorre@gmail.com
 
 import csv
 import glob
+import json
 import os
 import shutil
 import tempfile
@@ -16,15 +17,18 @@ from stim_randomizer.subsets import create_stim_sets
 
 path = os.getcwd()
 
-def test_create_stim_sets():
+with open('test_subtests.json', 'r') as data:
+    test_params = json.load(data)
+
+def test_create_stim_sets(params):
 
 
     # Define the categories
-    categories = ('animal', 'human', 'nature')
+    categories = params["categories"]
 
     # Variables
-    files_per_category = 48
-    number_of_sets = 4
+    files_per_category = params["files_per_category"]
+    number_of_sets = params["number_of_sets"]
     files_per_set = files_per_category * len(categories) / number_of_sets
 
     # Create dummy input folder and files
