@@ -15,13 +15,11 @@ import tempfile
 
 from stim_randomizer.subsets import create_stim_sets
 
-path = os.getcwd()
-
-with open('test_subtests.json', 'r') as data:
+with open('test_subsets.json', 'r') as data:
     test_params = json.load(data)
 
-def test_create_stim_sets(params):
 
+def test_create_stim_sets(params):
 
     # Define the categories
     categories = params["categories"]
@@ -42,7 +40,7 @@ def test_create_stim_sets(params):
     temp_output_folder = tempfile.mkdtemp()
 
     # Test stuff
-    create_stim_sets(temp_input_folder, temp_output_folder, number_of_sets, categories)
+    create_stim_sets(temp_input_folder, number_of_sets, categories, output_path=temp_output_folder)
 
     subsets = os.listdir(temp_output_folder)
 
