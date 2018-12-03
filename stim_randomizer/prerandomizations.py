@@ -7,12 +7,55 @@ Mail: juanjesustorre@gmail.com
 """
 
 import csv
+import numpy as np
 import os
 
 from random import shuffle
 
 
-def create_prerandomizations(input_path, prerandom_number, output_path='default', categories=None, subsets=None,
+def pseudo_label_mapper(labels, elements):
+    """Array of len(labels) * elements length, randomly mapped so two consecutive elements are never of the same
+    category (same number).
+
+    Chunks containing one number per category will be randomized and inserted on the final list. At each iteration,
+    the function will check if the first element of the current chunk is the same as the last element of the previous
+    one. If this is the case, the first element of the current chunk will be swapped with the last one.
+
+    This function assumes that the set has the same number of elements for each category.
+
+    Parameters
+    ----------
+    labels: int
+            desired number of categories
+
+    elements: int
+              number of stimuli per category
+
+    Returns
+    -------
+    label_array: np.array
+                 randomized array of len(range(labels)) * elements) of numbers where
+    """
+
+    for blocks in range(0, elements):
+
+        chunk = np.arange(labels)
+        np.random.shuffle(chunk)
+
+        try:
+            if chunk[0] == label_list[-1]:
+                chunk[0], chunk[-1] = chunk[-1], chunk[0]
+        except NameError:
+            label_list = []
+
+        label_list.extend(chunk)
+
+    label_array = np.array(label_list)
+
+    return label_array
+
+
+def create_prerandomizations(input_path, prerandom_number, output_path='default', categories=None, subsets=False,
                              constrained=False, method='pseudo'):
 
     """Generate a number of random orders for previously existing stim files, and save each of them to a
@@ -37,10 +80,10 @@ def create_prerandomizations(input_path, prerandom_number, output_path='default'
                 if the stimuli is divided into categories, a list containing them as strings should be provided
                 here
 
-    subsets: int, default None
-             number of subsets, if any. In case a value is provided, the prerandomization will look for files
-             named up to 'subset_[subsets].tsv'. At default value, it assumes the directory provided in input_path
-             contains the stim files.
+    subsets: bool, default False
+             variable denoting the existence of subsets. If True, the function will treat the elements of the input
+             directory as .tsv files containing the stim of each subset. At default value, it assumes the directory
+             provided in input_path contains the stim files.
 
     constrained: bool, default False
                  if set to True, the prerandomizations will follow the constrain that two consecutive elements are
@@ -63,3 +106,32 @@ def create_prerandomizations(input_path, prerandom_number, output_path='default'
             look back for places on the list where inserting the remaining values would not violate the constrain.
             It is handled by the constrained_pure_shuffle function.
     """
+
+    all_stim = sorted(os.listdir(input_path))
+
+    for prerand_num in prerandom_number:
+
+        # Check for categories
+        if categories is None or not constrained:
+
+            # Shuffle the stim
+            shuffle_stim = shuffle(all_stim)
+
+            # Save it on a csv file
+            prerand_path = os.path.join(output_path, 'prerand_' + str(prerand_num))
+
+            with open(prerand_path, 'w') as csvfile:
+
+                prerandwriter = csv.writer(csvfile, delimiter='\t')
+                prerandwriter.writerow(shuffle_stim)
+
+        elif method == 'pseudo':
+
+            cat_num = len(categories)
+            files_per_cat = len(all_stim) / cat_num
+
+            shuffle_stim = pseudo_label_mapper(cat_num, files_per_cat)
+
+        elif method == 'pure':
+
+            pass
