@@ -10,7 +10,81 @@ import csv
 import numpy as np
 import os
 
-from random import shuffle
+from random import sample, shuffle
+
+
+def file_indexer(cat_list, file_list):
+    """Create a dictionary with keys ranging from 0 to len(file_list), which contains the name
+    of the files together with their corresponding category.
+
+    Parameters
+    ----------
+    cat_list: list
+              contains keys corresponding to an integer for each category, and values
+              with the name of said category
+
+    file_list: list
+               names of the files in strings
+
+    Returns
+    -------
+    file_index: dict
+                keys are numbers ranging from 0, and values are two-element tuples containing the
+                filename as first value and its corresponding category as second value
+    """
+
+    # Determine the number of elements per category
+    num_files = len(file_list)
+    num_cat = len(cat_list)
+
+    stim_per_cat = int(num_files / num_cat)
+
+    # Create the index
+    file_index = {key: (file_list[key], cat_list[cat]) for cat in range(num_cat)
+                  for key in range(cat * stim_per_cat, (cat + 1) * stim_per_cat)}
+
+    return file_index
+
+
+def within_category_random_map(label_array):
+    """Create array of range(len(label_array)), composed by numbers from 0 to len(label_array).
+
+    The resulting list will preserve the category order of the input, but randomizing within each category.
+    For example, if label_array were to have 10 elements of value 0 and 10 elements of value 1,
+    a random permutation of numbers from 0 to 10 would be assigned where label_array == 0, and a
+    random permutation of numbers from 11 to 20 where label_array == 1
+
+    This function is intended to work with a previously randomized label_array for event designs, but it also
+    can be used on a non-randomized array to ensure different pseudorandomizations of blocks in blocked designs.
+
+    Parameters
+    ----------
+    label_array: np.array
+                 array of numbers corresponding to different categories
+
+    Returns
+    -------
+    output_list: list
+                 a list containing a random permutation of numbers corresponding to each value of label_array.
+    """
+
+    # Initialize the output list.
+    output_list = np.zeros(len(label_array))
+
+    # Find out the number of categories...
+    cat_num = len(np.unique(label_array))
+
+    # ...and the number of elements for each category.
+    stim_per_cat = int(len(label_array) / cat_num)
+
+    for category in range(cat_num):
+
+        output_list[label_array == category] = np.random.permutation(range(category * stim_per_cat, (category + 1) *
+                                                                           stim_per_cat))
+
+    output_list = output_list.astype(int)
+
+    return output_list
 
 
 def pseudo_label_mapper(labels, elements):
@@ -109,29 +183,44 @@ def create_prerandomizations(input_path, prerandom_number, output_path='default'
 
     all_stim = sorted(os.listdir(input_path))
 
-    for prerand_num in prerandom_number:
+    if output_path == 'default':
+
+        output_path = os.path.join(input_path, '../prerandomizations')
+
+    for prerand_num in range(prerandom_number):
 
         # Check for categories
         if categories is None or not constrained:
 
             # Shuffle the stim
-            shuffle_stim = shuffle(all_stim)
+            final_list = sample(all_stim, len(all_stim))
 
-            # Save it on a csv file
-            prerand_path = os.path.join(output_path, 'prerand_' + str(prerand_num))
+        # If there are categories, generate a label array depending on the chosen method
+        else:
 
-            with open(prerand_path, 'w') as csvfile:
+            if method == 'pseudo':
 
-                prerandwriter = csv.writer(csvfile, delimiter='\t')
-                prerandwriter.writerow(shuffle_stim)
+                cat_num = len(categories)
+                files_per_cat = len(all_stim) / cat_num
 
-        elif method == 'pseudo':
+                label_map = pseudo_label_mapper(cat_num, files_per_cat)
 
-            cat_num = len(categories)
-            files_per_cat = len(all_stim) / cat_num
+            if method == 'pure':
 
-            shuffle_stim = pseudo_label_mapper(cat_num, files_per_cat)
+                pass
 
-        elif method == 'pure':
+            within_cat_map = within_category_random_map(label_map)
 
-            pass
+            file_index = file_indexer(categories, all_stim)
+
+            final_list = [file_index[number] for number in within_cat_map]
+
+        # Save it on a csv file
+        prerand_path = os.path.join(output_path, 'prerand_' + str(prerand_num) + '.tsv')
+
+        with open(prerand_path, 'w') as csvfile:
+
+            prerandwriter = csv.writer(csvfile, lineterminator='\n')
+
+            for stim in final_list:
+                prerandwriter.writerow([stim])
