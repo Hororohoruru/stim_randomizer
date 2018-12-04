@@ -12,7 +12,7 @@ import os
 import shutil
 import tempfile
 
-from stim_randomizer.prerandomizations import create_prerandomizations, pseudo_label_mapper, within_category_random_map, file_indexer
+from stim_randomizer.prerandomizations import create_prerandomizations, pseudo_label_mapper, pure_label_mapper, within_category_random_map, file_indexer
 
 # Define the categories
 categories = ["human", "animal", "nature"]
@@ -46,6 +46,17 @@ def test_within_category_random_map():
     test_map = within_category_random_map(test_labels)
 
     assert len(np.unique(test_map)) == len(test_map)
+
+
+def test_pure_label_mapper():
+
+    cat_num = 10
+    elements = 50
+
+    test_map = pure_label_mapper(cat_num, elements)
+
+    assert np.sum(test_map[:-1] == test_map[1:]) == 0
+    assert len(test_map) == cat_num * elements
 
 
 def test_pseudo_label_mapper():
@@ -111,7 +122,42 @@ def test_create_prerandomizations():
     temp_output_folder = tempfile.mkdtemp()
 
     # Run the function and test
-    create_prerandomizations(temp_input_folder, prerandom_number, temp_output_folder)
+    create_prerandomizations(temp_input_folder, prerandom_number, temp_output_folder, constrained=True)
+
+    prerands = os.listdir(temp_output_folder)
+
+    assert len(prerands) == prerandom_number
+
+    for file in prerands:
+
+        path = os.path.join(temp_output_folder, file)
+
+        with open(path, 'r') as prerand:
+
+            assert sum(1 for row in prerand) == file_number
+
+    # Delete temp folders and files
+    shutil.rmtree(temp_input_folder)
+    shutil.rmtree(temp_output_folder)
+
+    # TEST CASE 3: 3 prerandomizations, 3 categories, no subsets, pure method
+
+    # Parameters
+    files_per_category = 30
+    prerandom_number = 3
+    file_number = files_per_category * len(categories)
+
+    # Create dummy input folder and files
+    temp_input_folder = tempfile.mkdtemp()
+
+    for category in categories:
+        for _ in range(files_per_category):
+            tempfile.mkstemp(prefix=(category + '%02d' % _), dir=temp_input_folder)
+
+    temp_output_folder = tempfile.mkdtemp()
+
+    # Run the function and test
+    create_prerandomizations(temp_input_folder, prerandom_number, temp_output_folder, constrained=True, method='pure')
 
     prerands = os.listdir(temp_output_folder)
 
@@ -132,4 +178,5 @@ def test_create_prerandomizations():
 
 test_create_prerandomizations()
 test_pseudo_label_mapper()
+test_pure_label_mapper()
 test_within_category_random_map()

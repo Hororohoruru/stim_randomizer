@@ -10,7 +10,7 @@ import csv
 import numpy as np
 import os
 
-from random import sample, shuffle
+from random import sample, choices
 
 
 def file_indexer(cat_list, file_list):
@@ -108,7 +108,8 @@ def pseudo_label_mapper(labels, elements):
     Returns
     -------
     label_array: np.array
-                 randomized array of len(range(labels)) * elements) of numbers where
+                 randomized array of len(range(labels)) * elements) of numbers where no two consecutive elements are
+                 the same value
     """
 
     for blocks in range(0, elements):
@@ -117,14 +118,119 @@ def pseudo_label_mapper(labels, elements):
         np.random.shuffle(chunk)
 
         try:
+
             if chunk[0] == label_list[-1]:
+
                 chunk[0], chunk[-1] = chunk[-1], chunk[0]
+
         except NameError:
+
             label_list = []
 
         label_list.extend(chunk)
 
     label_array = np.array(label_list)
+
+    return label_array
+
+
+def send_back(value, times, lst):
+    """Helper function of pure_label_mapper. Inserts the value given at input in a position where the previous and
+    next values are not the same.
+
+    Note that the function performs the insertions in place, and does not return a new list.
+    
+    Parameters
+    ----------
+    
+    value: int
+           number that is going to be inserted on the list
+           
+    times: int
+           number of times to insert the designated value
+
+    lst: list
+         input list where the values are going to be inserted
+
+    Returns
+    -------
+
+    None
+    """
+
+    idx = len(lst)-2
+
+    for _ in range(times):
+
+        while lst[idx] == value or lst[idx-1] == value:
+
+            idx -= 1
+
+        lst.insert(idx, value)
+
+
+def pure_label_mapper(labels, elements):
+    """Array of len(labels) * elements length, randomly mapped so two consecutive elements are never of the same
+    category (same number).
+
+    The elements of the array will be generated one by one, picking from a population of the possible values, using
+    weights to control the frequency. At each iteration, the selected element's weight will be set to 0 for the next
+    iteration, and this value will be subtracted 1. In the end, there will be an equal number of each one of the
+    population's values.
+
+    The helper function send_back will take care of cases where the only values remaining are already the same as the
+    one chosen by the last iteration (i.e., the population is empty).
+
+    Parameters
+    ----------
+    labels: int
+            desired number of categories
+
+    elements: int
+              number of stimuli per category
+
+    Returns
+    -------
+    label_array: np.array
+                 randomized array of len(range(labels)) * elements) of numbers where no two consecutive elements are
+                 the same value
+    """
+
+    population = list(range(labels))
+
+    weights = [elements] * labels
+    label_array = []
+    prev = None
+
+    for i in range(labels * elements):
+
+        if prev is not None:
+
+            # Store the previous value and set its weight to 0 for the next iteration
+            old_weight = weights[prev]
+            weights[prev] = 0
+
+        try:
+
+            chosen = choices(population, weights)[0]
+
+        except IndexError:
+
+            # If all the weights are 0, the helper function will put the remaining values where
+            # they do not violate the repetition constrain
+            send_back(prev, old_weight, label_array)
+
+            break
+
+        label_array.append(chosen)
+        weights[chosen] -= 1
+
+        if prev is not None:
+
+            # Restore weight
+            weights[prev] = old_weight
+
+        prev = chosen
 
     return label_array
 
