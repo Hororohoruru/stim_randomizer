@@ -72,108 +72,64 @@ def test_pseudo_label_mapper():
 
 def test_create_prerandomizations():
 
-    # TEST CASE 1: 3 prerandomizations, no categories, no subsets
+    testing_parameters = {'file_number': [80, 90, 90],
+                          'files_per_category': [0, 30, 30],
+                          'prerandom_number': [3, 3, 3],
+                          'constrained': [False, True, True],
+                          'method': ['pseudo', 'pseudo', 'pure']}
 
-    # Parameters
-    file_number = 80
-    prerandom_number = 3
+    # From testing_parameters, create a list of dictionaries with the same keys, but only one of the values,
+    # to use for the different test cases
 
-    # Create dummy input folder and files
-    temp_input_folder = tempfile.mkdtemp()
+    test_cases = [dict(zip(testing_parameters.keys(), case)) for case in zip(*testing_parameters.values())]
 
-    for file in range(file_number):
-        tempfile.mkstemp(dir=temp_input_folder)
+    for case in test_cases:
 
-    temp_output_folder = tempfile.mkdtemp()
+        # TEST CASE 1: 3 prerandomizations, no categories, no subsets
+        # TEST CASE 2: 3 prerandomizations, 3 categories, no subsets, pseudo method
+        # TEST CASE 3: 3 prerandomizations, 3 categories, no subsets, pure method
 
-    # Run the function and test
-    create_prerandomizations(temp_input_folder, prerandom_number, temp_output_folder)
+        # Create dummy input folder, output folder and files
+        temp_input_folder = tempfile.mkdtemp()
 
-    prerands = os.listdir(temp_output_folder)
+        if case['files_per_category'] != 0:
 
-    assert len(prerands) == prerandom_number
+            for category in categories:
 
-    for file in prerands:
+                for i in range(case['files_per_category']):
 
-        path = os.path.join(temp_output_folder, file)
+                    tempfile.mkstemp(prefix=(category + '%02d' % i), dir=temp_input_folder)
 
-        with open(path, 'r') as prerand:
+        else:
 
-            assert sum(1 for row in prerand) == file_number
+            for file in range(case['file_number']):
 
-    # Delete temp folders and files
-    shutil.rmtree(temp_input_folder)
-    shutil.rmtree(temp_output_folder)
+                tempfile.mkstemp(dir=temp_input_folder)
 
-    # TEST CASE 2: 3 prerandomizations, 3 categories, no subsets, pseudo method
+        temp_output_folder = tempfile.mkdtemp()
 
-    # Parameters
-    files_per_category = 30
-    prerandom_number = 3
-    file_number = files_per_category * len(categories)
+        # Run the function and test
+        create_prerandomizations(temp_input_folder,
+                                 case['prerandom_number'],
+                                 temp_output_folder,
+                                 constrained=case['constrained'],
+                                 method=case['method'])
 
-    # Create dummy input folder and files
-    temp_input_folder = tempfile.mkdtemp()
+        prerands = os.listdir(temp_output_folder)
 
-    for category in categories:
-        for _ in range(files_per_category):
-            tempfile.mkstemp(prefix=(category + '%02d' % _), dir=temp_input_folder)
+        assert len(prerands) == case['prerandom_number']
 
-    temp_output_folder = tempfile.mkdtemp()
+        for file in prerands:
 
-    # Run the function and test
-    create_prerandomizations(temp_input_folder, prerandom_number, temp_output_folder, constrained=True)
+            path = os.path.join(temp_output_folder, file)
 
-    prerands = os.listdir(temp_output_folder)
+            with open(path, 'r') as prerand:
 
-    assert len(prerands) == prerandom_number
+                assert sum(1 for row in prerand) == case['file_number']
 
-    for file in prerands:
-
-        path = os.path.join(temp_output_folder, file)
-
-        with open(path, 'r') as prerand:
-
-            assert sum(1 for row in prerand) == file_number
-
-    # Delete temp folders and files
-    shutil.rmtree(temp_input_folder)
-    shutil.rmtree(temp_output_folder)
-
-    # TEST CASE 3: 3 prerandomizations, 3 categories, no subsets, pure method
-
-    # Parameters
-    files_per_category = 30
-    prerandom_number = 3
-    file_number = files_per_category * len(categories)
-
-    # Create dummy input folder and files
-    temp_input_folder = tempfile.mkdtemp()
-
-    for category in categories:
-        for _ in range(files_per_category):
-            tempfile.mkstemp(prefix=(category + '%02d' % _), dir=temp_input_folder)
-
-    temp_output_folder = tempfile.mkdtemp()
-
-    # Run the function and test
-    create_prerandomizations(temp_input_folder, prerandom_number, temp_output_folder, constrained=True, method='pure')
-
-    prerands = os.listdir(temp_output_folder)
-
-    assert len(prerands) == prerandom_number
-
-    for file in prerands:
-
-        path = os.path.join(temp_output_folder, file)
-
-        with open(path, 'r') as prerand:
-
-            assert sum(1 for row in prerand) == file_number
-
-    # Delete temp folders and files
-    shutil.rmtree(temp_input_folder)
-    shutil.rmtree(temp_output_folder)
+        # Delete temp folders and files
+        shutil.rmtree(temp_input_folder)
+        shutil.rmtree(temp_output_folder)
 
 
 test_create_prerandomizations()
