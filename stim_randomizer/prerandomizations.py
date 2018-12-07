@@ -342,7 +342,7 @@ def create_prerandomizations(input_path, prerandom_number, output_path='default'
 
             os.mkdir(output_path)
 
-    for subset in all_stim:
+    for subset_num, subset in enumerate(all_stim):
 
         for prerand_num in range(prerandom_number):
 
@@ -373,7 +373,15 @@ def create_prerandomizations(input_path, prerandom_number, output_path='default'
                 final_list = [file_index[number] for number in within_cat_map]
 
             # Save it on a csv file
-            prerand_path = os.path.join(output_path, 'prerand_' + str(prerand_num + 1) + '.tsv')
+            if subsets is True:
+
+                prerand_path = os.path.join(output_path,
+                                            'set_' + str(subset_num + 1) + 'prerand_' + str(prerand_num + 1) + '.tsv')
+
+            else:
+
+                prerand_path = os.path.join(output_path,
+                                            'prerand_' + str(prerand_num + 1) + '.tsv')
 
             with open(prerand_path, 'w') as csvfile:
 
