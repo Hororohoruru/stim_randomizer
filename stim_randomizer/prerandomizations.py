@@ -326,65 +326,52 @@ def create_prerandomizations(input_path, prerandom_number, output_path='default'
             It is handled by the constrained_pure_shuffle function.
     """
 
+    # Check if subsets exist and prepare the stim accordingly
     if subsets is True:
-
         all_stim = subset_parser(input_path)
 
     else:
-
         all_stim = [sorted(os.listdir(input_path))]
 
+    # Prepare the output path
     if output_path == 'default':
-
         output_path = os.path.join(input_path, '../prerandomizations')
 
-        if not os.path.exists(output_path):
-
-            os.mkdir(output_path)
+    if not os.path.exists(output_path):
+        os.mkdir(output_path)
 
     for subset_num, subset in enumerate(all_stim):
-
         for prerand_num in range(prerandom_number):
-
             # Check for categories
             if categories is None or not constrained:
-
                 # Shuffle the stim
                 final_list = sample(subset, len(subset))
 
             # If there are categories, generate a label array depending on the chosen method
             else:
-
                 cat_num = len(categories)
                 files_per_cat = int(len(subset) / cat_num)
 
                 if method == 'pseudo':
-
                     label_map = pseudo_label_mapper(cat_num, files_per_cat)
-
                 elif method == 'pure':
-
                     label_map = pure_label_mapper(cat_num, files_per_cat)
 
                 within_cat_map = within_category_random_map(label_map)
-
                 file_index = file_indexer(categories, subset)
 
                 final_list = [file_index[number] for number in within_cat_map]
 
             # Save it on a csv file
             if subsets is True:
-
                 prerand_path = os.path.join(output_path,
                                             'set_' + str(subset_num + 1) + 'prerand_' + str(prerand_num + 1) + '.tsv')
 
             else:
-
                 prerand_path = os.path.join(output_path,
                                             'prerand_' + str(prerand_num + 1) + '.tsv')
 
             with open(prerand_path, 'w') as csvfile:
-
                 prerandwriter = csv.writer(csvfile)
 
                 for stim in final_list:
