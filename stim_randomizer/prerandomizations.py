@@ -80,7 +80,6 @@ def within_category_random_map(label_array):
     stim_per_cat = int(len(label_array) / cat_num)
 
     for category in range(cat_num):
-
         output_list[label_array == category] = np.random.permutation(range(category * stim_per_cat, (category + 1) *
                                                                            stim_per_cat))
 
@@ -115,18 +114,14 @@ def pseudo_label_mapper(labels, elements):
     """
 
     for blocks in range(0, elements):
-
         chunk = np.arange(labels)
         np.random.shuffle(chunk)
 
         try:
-
             if chunk[0] == label_list[-1]:
-
                 chunk[0], chunk[-1] = chunk[-1], chunk[0]
 
         except NameError:
-
             label_list = []
 
         label_list.extend(chunk)
@@ -163,9 +158,7 @@ def send_back(value, times, lst):
     idx = len(lst)-2
 
     for _ in range(times):
-
         while lst[idx] == value or lst[idx-1] == value:
-
             idx -= 1
 
         lst.insert(idx, value)
@@ -205,30 +198,24 @@ def pure_label_mapper(labels, elements):
     prev = None
 
     for i in range(labels * elements):
-
         if prev is not None:
-
             # Store the previous value and set its weight to 0 for the next iteration
             old_weight = weights[prev]
             weights[prev] = 0
 
         try:
-
             chosen = choices(population, weights)[0]
 
         except IndexError:
-
             # If all the weights are 0, the helper function will put the remaining values where
             # they do not violate the repetition constrain
             send_back(prev, old_weight, label_list)
-
             break
 
         label_list.append(chosen)
         weights[chosen] -= 1
 
         if prev is not None:
-
             # Restore weight
             weights[prev] = old_weight
 
@@ -261,11 +248,9 @@ def subset_parser(subsets_path):
     subsets = sorted(os.listdir(subsets_path))
 
     for subset in subsets:
-
         subset_path = os.path.join(subsets_path, subset)
 
         stim = pd.read_table(subset_path, header=None)
-
         stim_list = list(stim[0])
 
         parsed_files.append(stim_list)
