@@ -1,5 +1,5 @@
 """
-Tests for subsets.py
+Tests for prerandomizations.py
 
 Author: Juan Jesus Torre Tresols
 Mail: juanjesustorre@gmail.com
@@ -22,20 +22,57 @@ from stim_randomizer.subsets import create_stim_sets
 categories = ["human", "animal", "nature"]
 
 
+def set_up_files(file_number, cat=False, categories=None):
+    """Performs the necessary setup for test functions that take files as input
+
+    Parameters
+    ----------
+
+    file_number: int
+                 number of file that will be created as input. If cat is False, this will be the total number of
+                 files. If it is set to True, this will be the number of files per category
+
+    cat: bool, default False
+         if True, it will append the category names provided in categories to the temp files
+
+    categories: list, default None
+                names of the categories to be used. Note that it will only be taken into account if cat=True
+
+    Returns
+    -------
+
+    input_folder: str
+                  path to the temporary input folder, containing the files to be used by the tests
+
+    output_folder: str
+                   path to the output folder, where the files created by the functions will be
+    """
+
+    input_folder = tempfile.mkdtemp()
+    output_folder = tempfile.mkdtemp()
+
+    if cat:
+        for category in categories:
+            for i in range(file_number // len(categories)):
+                tempfile.mkstemp(prefix=(category + '%02d' % i), dir=input_folder)
+
+    else:
+        for file in range(file_number):
+            tempfile.mkstemp(dir=input_folder)
+
+    return input_folder, output_folder
+
+
 def test_file_indexer():
 
     # Parameters
     files_per_category = 30
 
     # Create dummy input folder and files
-    temp_input_folder = tempfile.mkdtemp()
+    temp_input_folder, _ = set_up_files(files_per_category, cat=True, categories=categories)
 
-    for category in categories:
-        for _ in range(files_per_category):
-            tempfile.mkstemp(prefix=(category + '%02d' % _), dir=temp_input_folder)
-
+    # Test
     file_list = sorted(os.listdir(temp_input_folder))
-
     test_index = file_indexer(categories, file_list)
 
     assert len(test_index) == len(file_list)
@@ -126,29 +163,17 @@ def test_create_prerandomizations():
         # TEST CASE 2: 3 prerandomizations, 3 categories, no subsets, pseudo method
         # TEST CASE 3: 3 prerandomizations, 3 categories, no subsets, pure method
 
-        # Create dummy input folder, output folder and files
-        temp_input_folder = tempfile.mkdtemp()
-
         if case['files_per_category'] != 0:
-
-            for category in categories:
-
-                for i in range(case['files_per_category']):
-
-                    tempfile.mkstemp(prefix=(category + '%02d' % i), dir=temp_input_folder)
+            temp_input_folder, temp_output_folder = set_up_files(case["file_number"], cat=True, categories=categories)
 
         else:
-
-            for file in range(case['file_number']):
-
-                tempfile.mkstemp(dir=temp_input_folder)
-
-        temp_output_folder = tempfile.mkdtemp()
+            temp_input_folder, temp_output_folder = set_up_files(case["file_number"])
 
         # Run the function and test
         create_prerandomizations(temp_input_folder,
                                  case['prerandom_number'],
                                  temp_output_folder,
+                                 categories=categories,
                                  constrained=case['constrained'],
                                  method=case['method'])
 
@@ -157,9 +182,7 @@ def test_create_prerandomizations():
         assert len(prerands) == case['prerandom_number']
 
         for file in prerands:
-
             path = os.path.join(temp_output_folder, file)
-
             prerand_df = pd.read_table(path, header=None)
 
             assert len(prerand_df) == case['file_number']
