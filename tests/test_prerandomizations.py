@@ -6,12 +6,11 @@ Mail: juanjesustorre@gmail.com
 
 """
 
-import csv
-import numpy as np
 import os
 import shutil
 import tempfile
 
+import numpy as np
 import pandas as pd
 
 from stim_randomizer.prerandomizations import create_prerandomizations, pseudo_label_mapper, pure_label_mapper, within_category_random_map, file_indexer, subset_parser
@@ -20,6 +19,20 @@ from stim_randomizer.subsets import create_stim_sets
 
 # Define the categories
 categories = ["human", "animal", "nature"]
+
+
+def cleanup_files(*args):
+    """Delete all the folders given as input, and the files inside them
+
+    Parameters
+    ----------
+
+    *args: tuple
+           directories you want to remove
+    """
+
+    for path in args:
+        shutil.rmtree(path)
 
 
 def set_up_files(file_number, cat=False, categories=None):
@@ -77,8 +90,7 @@ def test_file_indexer():
 
     assert len(test_index) == len(file_list)
 
-    # Delete temp folders and files
-    shutil.rmtree(temp_input_folder)
+    cleanup_files(temp_input_folder)
 
 
 def test_within_category_random_map():
@@ -139,9 +151,7 @@ def test_subset_parser():
 
         assert len(subset) == files_per_set
 
-    shutil.rmtree(temp_input_folder)
-    shutil.rmtree(temp_output_folder)
-
+    cleanup_files(temp_input_folder, temp_output_folder)
 
 
 def test_create_prerandomizations():
@@ -188,8 +198,7 @@ def test_create_prerandomizations():
             assert len(prerand_df) == case['file_number']
 
         # Delete temp folders and files
-        shutil.rmtree(temp_input_folder)
-        shutil.rmtree(temp_output_folder)
+        cleanup_files(temp_input_folder, temp_output_folder)
 
 
 test_subset_parser()
