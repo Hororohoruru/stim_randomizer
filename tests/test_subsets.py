@@ -13,6 +13,8 @@ import os
 import shutil
 import tempfile
 
+import pandas as pd
+
 from stim_randomizer.subsets import create_stim_sets
 
 with open('test_subsets.json', 'r') as data:
@@ -42,16 +44,24 @@ def test_create_stim_sets(params):
     # Test stuff
     create_stim_sets(temp_input_folder, number_of_sets, categories, output_path=temp_output_folder)
 
-    subsets = os.listdir(temp_output_folder)
+    subsets = sorted(os.listdir(temp_output_folder))
 
     assert len(subsets) == number_of_sets
 
     for subset in subsets:
-        with csv.reader(subset) as file:
-            assert files_per_set == sum(1 for row in file)
 
-            for category in categories:
-                assert len(glob.glob('*' + category + '*')) == files_per_set / len(categories)
+        subset_path = os.path.join(temp_output_folder, subset)
+
+        subset_df = pd.read_table(subset_path, header=None)
+
+        assert files_per_set == len(subset_df)
+
+        for category in categories:
+
+            assert len(subset_df[subset_df[0].str.contains(category)]) == files_per_set // len(categories)
 
     shutil.rmtree(temp_input_folder)
     shutil.rmtree(temp_output_folder)
+
+
+test_create_stim_sets(test_params)

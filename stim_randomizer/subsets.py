@@ -5,15 +5,18 @@ Author: Juan Jesus Torre Tresols
 Mail: juanjesustorre@gmail.com
 
 """
+import csv
 import os
 
 from random import shuffle
 
 
-def create_stim_sets(input_path, output_path, set_num, categories):
+def create_stim_sets(input_path, set_num, categories, output_path='default'):
 
     """Divide a list of files (stim) in n separated sets of equal length, with the same number
-    of elements of each category in each set
+    of elements of each category in each set.
+
+    The function will create a tsv file for each set, and save them at output_path.
 
     Parameters
     ----------
@@ -33,15 +36,20 @@ def create_stim_sets(input_path, output_path, set_num, categories):
     Returns
     ------
 
-    output_set: csv file
-                file containing the names of the stim for a given set. Note that there will be n files, being n
-                the variable set_num"""
+    None
+    """
+
+    # Set the default output_path:
+
+    if output_path == 'default':
+
+        output_path = os.path.join(input_path, '../subsets')
 
     # Get a list of all the filenames, as well as the number of files per set (both total and for each category)
     total_stim = sorted(os.listdir(input_path))
 
-    files_per_set = len(total_stim) / set_num
-    files_per_cat_per_set = files_per_set / len(categories)
+    files_per_set = len(total_stim) // set_num
+    files_per_cat_per_set = files_per_set // len(categories)
 
     # Initialize the sets
     subsets = {"set_" + str(_ + 1): [] for _ in range(set_num)}
@@ -62,4 +70,16 @@ def create_stim_sets(input_path, output_path, set_num, categories):
 
         for _, subset in enumerate(subsets.keys()):
 
-            subsets[subset].append(cat_chunks[_])
+            subsets[subset].extend(cat_chunks[_])
+
+    # Save the subsets in files
+    for subset in subsets.keys():
+
+        subsets_path = os.path.join(output_path, subset + '.tsv')
+
+        with open(subsets_path, 'w') as csvfile:
+
+            subsetwriter = csv.writer(csvfile)
+
+            for stim in subsets[subset]:
+                subsetwriter.writerow([stim])

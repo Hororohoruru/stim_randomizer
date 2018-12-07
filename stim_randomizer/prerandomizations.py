@@ -199,7 +199,7 @@ def pure_label_mapper(labels, elements):
     population = list(range(labels))
 
     weights = [elements] * labels
-    label_array = []
+    label_list = []
     prev = None
 
     for i in range(labels * elements):
@@ -218,11 +218,11 @@ def pure_label_mapper(labels, elements):
 
             # If all the weights are 0, the helper function will put the remaining values where
             # they do not violate the repetition constrain
-            send_back(prev, old_weight, label_array)
+            send_back(prev, old_weight, label_list)
 
             break
 
-        label_array.append(chosen)
+        label_list.append(chosen)
         weights[chosen] -= 1
 
         if prev is not None:
@@ -232,12 +232,31 @@ def pure_label_mapper(labels, elements):
 
         prev = chosen
 
+    label_array = np.array(label_list)
+
     return label_array
+
+
+def subset_parser(subsets_path):
+    """Parses the .tsv files at the input directory and put the filenames into lists to be used for prerandomizations
+
+    Parameters
+    ----------
+
+    subsets_path: str
+                  directory containing tsv files with the filenames used in each subset
+
+    Returns
+    -------
+
+    parsed_files: list
+                  each element of the list is a sublist containing all the filenames of a given subset
+
+    """
 
 
 def create_prerandomizations(input_path, prerandom_number, output_path='default', categories=None, subsets=False,
                              constrained=False, method='pseudo'):
-
     """Generate a number of random orders for previously existing stim files, and save each of them to a
     csv file to be loaded later by your experiment
 
@@ -271,6 +290,8 @@ def create_prerandomizations(input_path, prerandom_number, output_path='default'
 
     method: str, default 'pseudo'
             method of choice for the constrained prerandomizations. The availeble options are: 'pseudo', 'pure'.
+            Note that, regardless of the option chosen, none of them will be executed if constrained is set to
+            False.
 
             The 'pseudo' method will generate the order by creating a sublist with one element of each category,
             shuffle said elements, and append it to the final list. At each step, it will check that the first
@@ -287,11 +308,21 @@ def create_prerandomizations(input_path, prerandom_number, output_path='default'
             It is handled by the constrained_pure_shuffle function.
     """
 
-    all_stim = sorted(os.listdir(input_path))
+    if subsets is True:
+
+        all_stim = subset_parser(input_path)
+
+    else:
+
+        all_stim = [sorted(os.listdir(input_path))]
 
     if output_path == 'default':
 
         output_path = os.path.join(input_path, '../prerandomizations')
+
+        if not os.path.exists(output_path):
+
+            os.mkdir(output_path)
 
     for prerand_num in range(prerandom_number):
 
@@ -304,16 +335,16 @@ def create_prerandomizations(input_path, prerandom_number, output_path='default'
         # If there are categories, generate a label array depending on the chosen method
         else:
 
-            if method == 'pseudo':
+            cat_num = len(categories)
+            files_per_cat = int(len(all_stim) / cat_num)
 
-                cat_num = len(categories)
-                files_per_cat = len(all_stim) / cat_num
+            if method == 'pseudo':
 
                 label_map = pseudo_label_mapper(cat_num, files_per_cat)
 
-            if method == 'pure':
+            elif method == 'pure':
 
-                pass
+                label_map = pure_label_mapper(cat_num, files_per_cat)
 
             within_cat_map = within_category_random_map(label_map)
 
