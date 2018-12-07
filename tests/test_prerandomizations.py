@@ -12,7 +12,11 @@ import os
 import shutil
 import tempfile
 
-from stim_randomizer.prerandomizations import create_prerandomizations, pseudo_label_mapper, pure_label_mapper, within_category_random_map, file_indexer
+import pandas as pd
+
+from stim_randomizer.prerandomizations import create_prerandomizations, pseudo_label_mapper, pure_label_mapper, within_category_random_map, file_indexer, subset_parser
+
+from stim_randomizer.subsets import create_stim_sets
 
 # Define the categories
 categories = ["human", "animal", "nature"]
@@ -70,6 +74,39 @@ def test_pseudo_label_mapper():
     assert len(test_map) == cat_num * elements
 
 
+def test_subset_parser():
+
+    # Variables
+    files_per_category = 48
+    number_of_sets = 4
+    files_per_set = files_per_category * len(categories) / number_of_sets
+
+    # Set up the subsets using create_stim_sets from subsets.py
+    temp_input_folder = tempfile.mkdtemp()
+
+    for category in categories:
+        for _ in range(files_per_category):
+            tempfile.mkstemp(prefix=(category + '%02d' % _), dir=temp_input_folder)
+
+    temp_output_folder = tempfile.mkdtemp()
+
+    create_stim_sets(temp_input_folder, number_of_sets, categories, output_path=temp_output_folder)
+
+    parsed_sets = subset_parser(temp_output_folder)
+
+    # Test
+
+    assert len(parsed_sets) == len(os.listdir(temp_output_folder))
+
+    for subset in parsed_sets:
+
+        assert len(subset) == files_per_set
+
+    shutil.rmtree(temp_input_folder)
+    shutil.rmtree(temp_output_folder)
+
+
+
 def test_create_prerandomizations():
 
     testing_parameters = {'file_number': [80, 90, 90],
@@ -123,15 +160,16 @@ def test_create_prerandomizations():
 
             path = os.path.join(temp_output_folder, file)
 
-            with open(path, 'r') as prerand:
+            prerand_df = pd.read_table(path, header=None)
 
-                assert sum(1 for row in prerand) == case['file_number']
+            assert len(prerand_df) == case['file_number']
 
         # Delete temp folders and files
         shutil.rmtree(temp_input_folder)
         shutil.rmtree(temp_output_folder)
 
 
+test_subset_parser()
 test_create_prerandomizations()
 test_pseudo_label_mapper()
 test_pure_label_mapper()

@@ -7,8 +7,10 @@ Mail: juanjesustorre@gmail.com
 """
 
 import csv
-import numpy as np
 import os
+
+import numpy as np
+import pandas as pd
 
 from random import sample, choices
 
@@ -254,6 +256,22 @@ def subset_parser(subsets_path):
 
     """
 
+    parsed_files = []
+
+    subsets = sorted(os.listdir(subsets_path))
+
+    for subset in subsets:
+
+        subset_path = os.path.join(subsets_path, subset)
+
+        stim = pd.read_table(subset_path, header=None)
+
+        stim_list = list(stim[0])
+
+        parsed_files.append(stim_list)
+
+    return parsed_files
+
 
 def create_prerandomizations(input_path, prerandom_number, output_path='default', categories=None, subsets=False,
                              constrained=False, method='pseudo'):
@@ -324,40 +342,42 @@ def create_prerandomizations(input_path, prerandom_number, output_path='default'
 
             os.mkdir(output_path)
 
-    for prerand_num in range(prerandom_number):
+    for subset in all_stim:
 
-        # Check for categories
-        if categories is None or not constrained:
+        for prerand_num in range(prerandom_number):
 
-            # Shuffle the stim
-            final_list = sample(all_stim, len(all_stim))
+            # Check for categories
+            if categories is None or not constrained:
 
-        # If there are categories, generate a label array depending on the chosen method
-        else:
+                # Shuffle the stim
+                final_list = sample(subset, len(subset))
 
-            cat_num = len(categories)
-            files_per_cat = int(len(all_stim) / cat_num)
+            # If there are categories, generate a label array depending on the chosen method
+            else:
 
-            if method == 'pseudo':
+                cat_num = len(categories)
+                files_per_cat = int(len(subset) / cat_num)
 
-                label_map = pseudo_label_mapper(cat_num, files_per_cat)
+                if method == 'pseudo':
 
-            elif method == 'pure':
+                    label_map = pseudo_label_mapper(cat_num, files_per_cat)
 
-                label_map = pure_label_mapper(cat_num, files_per_cat)
+                elif method == 'pure':
 
-            within_cat_map = within_category_random_map(label_map)
+                    label_map = pure_label_mapper(cat_num, files_per_cat)
 
-            file_index = file_indexer(categories, all_stim)
+                within_cat_map = within_category_random_map(label_map)
 
-            final_list = [file_index[number] for number in within_cat_map]
+                file_index = file_indexer(categories, subset)
 
-        # Save it on a csv file
-        prerand_path = os.path.join(output_path, 'prerand_' + str(prerand_num) + '.tsv')
+                final_list = [file_index[number] for number in within_cat_map]
 
-        with open(prerand_path, 'w') as csvfile:
+            # Save it on a csv file
+            prerand_path = os.path.join(output_path, 'prerand_' + str(prerand_num + 1) + '.tsv')
 
-            prerandwriter = csv.writer(csvfile, lineterminator='\n')
+            with open(prerand_path, 'w') as csvfile:
 
-            for stim in final_list:
-                prerandwriter.writerow([stim])
+                prerandwriter = csv.writer(csvfile)
+
+                for stim in final_list:
+                    prerandwriter.writerow([stim])
