@@ -155,6 +155,13 @@ def test_pure_label_mapper():
     assert len(test_map) == cat_num * elements
 
 
+@pytest.mark.rises
+def test_pure_label_mapper_raises():
+
+    with pytest.raises(TypeError):
+        pure_label_mapper('10', '50')
+
+
 def test_pseudo_label_mapper():
 
     cat_num = 10
@@ -165,6 +172,12 @@ def test_pseudo_label_mapper():
     assert np.sum(test_map[:-1] == test_map[1:]) == 0
     assert len(test_map) == cat_num * elements
 
+
+@pytest.mark.rises
+def test_pseudo_label_mapper_raises():
+
+    with pytest.raises(TypeError):
+        pseudo_label_mapper('10', '50')
 
 def test_subset_parser():
 
@@ -250,6 +263,7 @@ def test_create_prerandomizations():
         cleanup_files(temp_input_folder, temp_output_folder)
 
 
+@pytest.mark.rises
 def test_create_prerandomizations_raises():
 
     temp_input_folder, temp_output_folder = set_up_files(30,
