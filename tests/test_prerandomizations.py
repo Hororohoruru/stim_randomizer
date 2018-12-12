@@ -7,11 +7,14 @@ Mail: juanjesustorre@gmail.com
 """
 
 import os
+import pytest
 import shutil
 import tempfile
 
 import numpy as np
 import pandas as pd
+
+from pprint import pprint
 
 from stim_randomizer.prerandomizations import create_prerandomizations, pseudo_label_mapper, pure_label_mapper, within_category_random_map, file_indexer, subset_parser
 
@@ -230,6 +233,7 @@ def test_create_prerandomizations():
                                  method=case['method'])
 
         prerands = os.listdir(temp_output_folder)
+        pprint(sorted(os.listdir(temp_output_folder)))
 
         assert len(prerands) == case['prerandom_number'] * case['subset_number']
 
@@ -241,6 +245,30 @@ def test_create_prerandomizations():
                 assert len(prerand_df) == case['file_number'] // case['subset_number']
             else:
                 assert len(prerand_df) == case['file_number']
+
+        # Delete temp folders and files
+        cleanup_files(temp_input_folder, temp_output_folder)
+
+
+def test_create_prerandomizations_raises():
+
+    temp_input_folder, temp_output_folder = set_up_files(30,
+                                                         cat=True,
+                                                         categories=categories)
+
+    with pytest.raises(ValueError) as excinfo:
+
+        create_prerandomizations(temp_input_folder,
+                                 3,
+                                 temp_output_folder,
+                                 categories=categories,
+                                 subsets=False,
+                                 constrained=True,
+                                 method='mocos')
+
+        exception_msg = excinfo.value.args[0]
+
+        assert exception_msg == "method argument must be 'pseudo' or 'pure'"
 
         # Delete temp folders and files
         cleanup_files(temp_input_folder, temp_output_folder)
