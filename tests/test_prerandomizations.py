@@ -16,7 +16,8 @@ import pandas as pd
 
 from pprint import pprint
 
-from stim_randomizer.prerandomizations import create_prerandomizations, pseudo_label_mapper, pure_label_mapper, within_category_random_map, file_indexer, subset_parser
+from stim_randomizer.prerandomizations import create_prerandomizations, _pseudo_label_mapper, _pure_label_mapper, \
+    _within_category_random_map, _file_indexer, _subset_parser
 
 from stim_randomizer.subsets import create_stim_sets
 
@@ -129,7 +130,7 @@ def test_file_indexer():
 
     # Test
     file_list = sorted(os.listdir(temp_input_folder))
-    test_index = file_indexer(categories, file_list)
+    test_index = _file_indexer(categories, file_list)
 
     assert len(test_index) == len(file_list)
 
@@ -138,8 +139,8 @@ def test_file_indexer():
 
 def test_within_category_random_map():
 
-    test_labels = pseudo_label_mapper(6, 12)
-    test_map = within_category_random_map(test_labels)
+    test_labels = _pseudo_label_mapper(6, 12)
+    test_map = _within_category_random_map(test_labels)
 
     assert len(np.unique(test_map)) == len(test_map)
 
@@ -149,7 +150,7 @@ def test_pure_label_mapper():
     cat_num = 10
     elements = 50
 
-    test_map = pure_label_mapper(cat_num, elements)
+    test_map = _pure_label_mapper(cat_num, elements)
 
     assert np.sum(test_map[:-1] == test_map[1:]) == 0
     assert len(test_map) == cat_num * elements
@@ -159,7 +160,7 @@ def test_pure_label_mapper():
 def test_pure_label_mapper_raises():
 
     with pytest.raises(TypeError):
-        pure_label_mapper('10', '50')
+        _pure_label_mapper('10', '50')
 
 
 def test_pseudo_label_mapper():
@@ -167,7 +168,7 @@ def test_pseudo_label_mapper():
     cat_num = 10
     elements = 50
 
-    test_map = pseudo_label_mapper(cat_num, elements)
+    test_map = _pseudo_label_mapper(cat_num, elements)
 
     assert np.sum(test_map[:-1] == test_map[1:]) == 0
     assert len(test_map) == cat_num * elements
@@ -177,7 +178,7 @@ def test_pseudo_label_mapper():
 def test_pseudo_label_mapper_raises():
 
     with pytest.raises(TypeError):
-        pseudo_label_mapper('10', '50')
+        _pseudo_label_mapper('10', '50')
 
 
 def test_subset_parser():
@@ -189,7 +190,7 @@ def test_subset_parser():
 
     subset_folder, _ = set_up_subsets(file_number, number_of_sets, categories)
 
-    parsed_sets = subset_parser(subset_folder)
+    parsed_sets = _subset_parser(subset_folder)
 
     # Test
 
