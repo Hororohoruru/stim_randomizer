@@ -203,67 +203,67 @@ def test_subset_parser():
     cleanup_files(subset_folder, _)
 
 
+testing_parameters = {'file_number': [80, 90, 90, 144],
+                      'files_per_category': [0, 30, 30, 12],
+                      'prerandom_number': [3, 3, 3, 3],
+                      'constrained': [False, True, True, False],
+                      'subsets': [False, False, False, True],
+                      'subset_number': [1, 1, 1, 4],
+                      'method': ['pseudo', 'pseudo', 'pure', 'pseudo']}
+
+# From testing_parameters, create a list of dictionaries with the same keys, but only one of the values,
+# to use for the different test cases
+
+test_cases = [dict(zip(testing_parameters.keys(), case)) for case in zip(*testing_parameters.values())]
+
+
 @pytest.mark.smoke
-def test_create_prerandomizations():
+@pytest.mark.parametrize('case', test_cases)
+def test_create_prerandomizations(case):
 
-    testing_parameters = {'file_number': [80, 90, 90, 144],
-                          'files_per_category': [0, 30, 30, 12],
-                          'prerandom_number': [3, 3, 3, 3],
-                          'constrained': [False, True, True, False],
-                          'subsets': [False, False, False, True],
-                          'subset_number': [1, 1, 1, 4],
-                          'method': ['pseudo', 'pseudo', 'pure', 'pseudo']}
+    # TEST CASE 1: 3 prerandomizations, no categories, no subsets
+    # TEST CASE 2: 3 prerandomizations, 3 categories, no subsets, pseudo method
+    # TEST CASE 3: 3 prerandomizations, 3 categories, no subsets, pure method
+    # TEST CASE 4: 3 prerandomizations, 3 categories, 4 subsets, pseudo method
 
-    # From testing_parameters, create a list of dictionaries with the same keys, but only one of the values,
-    # to use for the different test cases
+    if case['subsets']:
+        temp_input_folder, temp_output_folder = set_up_subsets(case['file_number'],
+                                                               case['subset_number'],
+                                                               categories)
 
-    test_cases = [dict(zip(testing_parameters.keys(), case)) for case in zip(*testing_parameters.values())]
+    elif case['files_per_category'] != 0:
+        temp_input_folder, temp_output_folder = set_up_files(case['files_per_category'],
+                                                             cat=True,
+                                                             categories=categories)
 
-    for case in test_cases:
+    else:
+        temp_input_folder, temp_output_folder = set_up_files(case['file_number'])
 
-        # TEST CASE 1: 3 prerandomizations, no categories, no subsets
-        # TEST CASE 2: 3 prerandomizations, 3 categories, no subsets, pseudo method
-        # TEST CASE 3: 3 prerandomizations, 3 categories, no subsets, pure method
-        # TEST CASE 4: 3 prerandomizations, 3 categories, 4 subsets, pseudo method
+    # Run the function and test
+    create_prerandomizations(temp_input_folder,
+                             case['prerandom_number'],
+                             temp_output_folder,
+                             categories=categories,
+                             subsets=case['subsets'],
+                             constrained=case['constrained'],
+                             method=case['method'])
+
+    prerands = os.listdir(temp_output_folder)
+    pprint(sorted(os.listdir(temp_output_folder)))
+
+    assert len(prerands) == case['prerandom_number'] * case['subset_number']
+
+    for file in prerands:
+        path = os.path.join(temp_output_folder, file)
+        prerand_df = pd.read_table(path, header=None)
 
         if case['subsets']:
-            temp_input_folder, temp_output_folder = set_up_subsets(case['file_number'],
-                                                                   case['subset_number'],
-                                                                   categories)
-
-        elif case['files_per_category'] != 0:
-            temp_input_folder, temp_output_folder = set_up_files(case['files_per_category'],
-                                                                 cat=True,
-                                                                 categories=categories)
-
+            assert len(prerand_df) == case['file_number'] // case['subset_number']
         else:
-            temp_input_folder, temp_output_folder = set_up_files(case['file_number'])
+            assert len(prerand_df) == case['file_number']
 
-        # Run the function and test
-        create_prerandomizations(temp_input_folder,
-                                 case['prerandom_number'],
-                                 temp_output_folder,
-                                 categories=categories,
-                                 subsets=case['subsets'],
-                                 constrained=case['constrained'],
-                                 method=case['method'])
-
-        prerands = os.listdir(temp_output_folder)
-        pprint(sorted(os.listdir(temp_output_folder)))
-
-        assert len(prerands) == case['prerandom_number'] * case['subset_number']
-
-        for file in prerands:
-            path = os.path.join(temp_output_folder, file)
-            prerand_df = pd.read_table(path, header=None)
-
-            if case['subsets']:
-                assert len(prerand_df) == case['file_number'] // case['subset_number']
-            else:
-                assert len(prerand_df) == case['file_number']
-
-        # Delete temp folders and files
-        cleanup_files(temp_input_folder, temp_output_folder)
+    # Delete temp folders and files
+    cleanup_files(temp_input_folder, temp_output_folder)
 
 
 @pytest.mark.rises
@@ -289,10 +289,3 @@ def test_create_prerandomizations_raises():
 
         # Delete temp folders and files
         cleanup_files(temp_input_folder, temp_output_folder)
-
-
-test_subset_parser()
-test_create_prerandomizations()
-test_pseudo_label_mapper()
-test_pure_label_mapper()
-test_within_category_random_map()
