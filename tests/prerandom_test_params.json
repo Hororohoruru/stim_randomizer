@@ -1,0 +1,8 @@
+{"categories": ["human", "animal", "nature"],
+  "cases_parameters": {"file_number": [80, 90, 90, 144],
+                       "files_per_category": [0, 30, 30, 12],
+                       "prerandom_number": [3, 3, 3, 3],
+                       "constrained": [false, true, true, false],
+                       "subsets": [false, false, false, true],
+                       "subset_number": [1, 1, 1, 4],
+                       "method": ["pseudo", "pseudo", "pure", "pseudo"]}}

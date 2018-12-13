@@ -6,6 +6,7 @@ Mail: juanjesustorre@gmail.com
 
 """
 
+import json
 import os
 import pytest
 import shutil
@@ -21,8 +22,13 @@ from stim_randomizer.prerandomizations import create_prerandomizations, _pseudo_
 
 from stim_randomizer.subsets import create_stim_sets
 
-# Define the categories
-categories = ("human", "animal", "nature")
+# Initialize parameters
+
+with open('prerandom_test_params.json', 'r') as config:
+    prerand_params = json.load(config)
+
+categories = prerand_params['categories']
+cases_parameters = prerand_params['cases_parameters']
 
 
 def cleanup_files(*args):
@@ -203,18 +209,10 @@ def test_subset_parser():
     cleanup_files(subset_folder, _)
 
 
-testing_parameters = {'file_number': [80, 90, 90, 144],
-                      'files_per_category': [0, 30, 30, 12],
-                      'prerandom_number': [3, 3, 3, 3],
-                      'constrained': [False, True, True, False],
-                      'subsets': [False, False, False, True],
-                      'subset_number': [1, 1, 1, 4],
-                      'method': ['pseudo', 'pseudo', 'pure', 'pseudo']}
-
 # From testing_parameters, create a list of dictionaries with the same keys, but only one of the values,
 # to use for the different test cases
 
-test_cases = [dict(zip(testing_parameters.keys(), case)) for case in zip(*testing_parameters.values())]
+test_cases = [dict(zip(cases_parameters.keys(), case)) for case in zip(*cases_parameters.values())]
 
 
 @pytest.mark.smoke
