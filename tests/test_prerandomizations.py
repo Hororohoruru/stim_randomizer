@@ -179,6 +179,7 @@ def test_pseudo_label_mapper_raises():
     with pytest.raises(TypeError):
         pseudo_label_mapper('10', '50')
 
+
 def test_subset_parser():
 
     # Variables
@@ -201,6 +202,7 @@ def test_subset_parser():
     cleanup_files(subset_folder, _)
 
 
+@pytest.mark.smoke
 def test_create_prerandomizations():
 
     testing_parameters = {'file_number': [80, 90, 90, 144],
