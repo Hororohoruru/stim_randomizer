@@ -15,7 +15,7 @@ import pandas as pd
 from random import sample, choices
 
 
-def file_indexer(cat_list, file_list):
+def _file_indexer(cat_list, file_list):
     """Create a dictionary with keys ranging from 0 to len(file_list), which contains the name
     of the files together with their corresponding category.
 
@@ -48,7 +48,7 @@ def file_indexer(cat_list, file_list):
     return file_index
 
 
-def within_category_random_map(label_array):
+def _within_category_random_map(label_array):
     """Create array of range(len(label_array)), composed by numbers from 0 to len(label_array).
 
     The resulting list will preserve the category order of the input, but randomizing within each category.
@@ -88,7 +88,7 @@ def within_category_random_map(label_array):
     return output_list
 
 
-def pseudo_label_mapper(labels, elements):
+def _pseudo_label_mapper(labels, elements):
     """Array of len(labels) * elements length, randomly mapped so two consecutive elements are never of the same
     category (same number).
 
@@ -131,7 +131,7 @@ def pseudo_label_mapper(labels, elements):
     return label_array
 
 
-def send_back(value, times, lst):
+def _send_back(value, times, lst):
     """Helper function of pure_label_mapper. Inserts the value given at input in a position where the previous and
     next values are not the same.
 
@@ -164,7 +164,7 @@ def send_back(value, times, lst):
         lst.insert(idx, value)
 
 
-def pure_label_mapper(labels, elements):
+def _pure_label_mapper(labels, elements):
     """Array of len(labels) * elements length, randomly mapped so two consecutive elements are never of the same
     category (same number).
 
@@ -209,7 +209,7 @@ def pure_label_mapper(labels, elements):
         except IndexError:
             # If all the weights are 0, the helper function will put the remaining values where
             # they do not violate the repetition constrain
-            send_back(prev, old_weight, label_list)
+            _send_back(prev, old_weight, label_list)
             break
 
         label_list.append(chosen)
@@ -226,7 +226,7 @@ def pure_label_mapper(labels, elements):
     return label_array
 
 
-def subset_parser(subsets_path):
+def _subset_parser(subsets_path):
     """Parses the .tsv files at the input directory and put the filenames into lists to be used for prerandomizations
 
     Parameters
@@ -313,7 +313,7 @@ def create_prerandomizations(input_path, prerandom_number, output_path='default'
 
     # Check if subsets exist and prepare the stim accordingly
     if subsets is True:
-        all_stim = subset_parser(input_path)
+        all_stim = _subset_parser(input_path)
 
     else:
         all_stim = [sorted(os.listdir(input_path))]
@@ -338,12 +338,16 @@ def create_prerandomizations(input_path, prerandom_number, output_path='default'
                 files_per_cat = int(len(subset) / cat_num)
 
                 if method == 'pseudo':
-                    label_map = pseudo_label_mapper(cat_num, files_per_cat)
+                    label_map = _pseudo_label_mapper(cat_num, files_per_cat)
                 elif method == 'pure':
-                    label_map = pure_label_mapper(cat_num, files_per_cat)
+                    label_map = _pure_label_mapper(cat_num, files_per_cat)
 
-                within_cat_map = within_category_random_map(label_map)
-                file_index = file_indexer(categories, subset)
+                try:
+                    within_cat_map = _within_category_random_map(label_map)
+                except UnboundLocalError as err:
+                    raise ValueError("method argument must be 'pseudo' or 'pure'") from err
+
+                file_index = _file_indexer(categories, subset)
 
                 final_list = [file_index[number] for number in within_cat_map]
 
