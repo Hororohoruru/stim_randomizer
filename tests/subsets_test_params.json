@@ -1,0 +1,4 @@
+{"categories": ["animal", "human", "nature"],
+  "cases_parameters": {"files_per_category": [48, 100, 27],
+                       "number_of_sets": [4, 5, 3]}
+}
