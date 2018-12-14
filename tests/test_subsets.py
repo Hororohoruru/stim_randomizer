@@ -6,10 +6,9 @@ Mail: juanjesustorre@gmail.com
 
 """
 
-import csv
-import glob
 import json
 import os
+import pytest
 import shutil
 import tempfile
 
@@ -18,10 +17,10 @@ import pandas as pd
 from stim_randomizer.subsets import create_stim_sets
 
 with open('test_subsets.json', 'r') as data:
-    test_params = json.load(data)
+    params = json.load(data)
 
 
-def test_create_stim_sets(params):
+def test_create_stim_sets():
 
     # Define the categories
     categories = params["categories"]
@@ -63,5 +62,3 @@ def test_create_stim_sets(params):
     shutil.rmtree(temp_input_folder)
     shutil.rmtree(temp_output_folder)
 
-
-test_create_stim_sets(test_params)
