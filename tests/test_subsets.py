@@ -16,18 +16,23 @@ import pandas as pd
 
 from stim_randomizer.subsets import create_stim_sets
 
-with open('test_subsets.json', 'r') as data:
-    params = json.load(data)
+with open('subsets_test_params.json', 'r') as data:
+    prerand_params = json.load(data)
+
+categories = prerand_params['categories']
+cases_parameters = prerand_params['cases_parameters']
+
+# From testing_parameters, create a list of dictionaries with the same keys, but only one of the values,
+# to use for the different test cases
+test_cases = [dict(zip(cases_parameters.keys(), case)) for case in zip(*cases_parameters.values())]
 
 
-def test_create_stim_sets():
-
-    # Define the categories
-    categories = params["categories"]
+@pytest.mark.parametrize('case', test_cases)
+def test_create_stim_sets(case):
 
     # Variables
-    files_per_category = params["files_per_category"]
-    number_of_sets = params["number_of_sets"]
+    files_per_category = case["files_per_category"]
+    number_of_sets = case["number_of_sets"]
     files_per_set = files_per_category * len(categories) / number_of_sets
 
     # Create dummy input folder and files
@@ -57,7 +62,7 @@ def test_create_stim_sets():
 
         for category in categories:
 
-            assert len(subset_df[subset_df[0].str.contains(category)]) == files_per_set // len(categories)
+            assert len(subset_df[subset_df[0].str.contains(category)]) == files_per_set / len(categories)
 
     shutil.rmtree(temp_input_folder)
     shutil.rmtree(temp_output_folder)
