@@ -213,10 +213,11 @@ def test_subset_parser():
 # to use for the different test cases
 
 test_cases = [dict(zip(cases_parameters.keys(), case)) for case in zip(*cases_parameters.values())]
+cases_ids = [c["id"] for c in test_cases]
 
 
 @pytest.mark.smoke
-@pytest.mark.parametrize('case', test_cases)
+@pytest.mark.parametrize('case', test_cases, ids=cases_ids)
 def test_create_prerandomizations(case):
 
     # TEST CASE 1: 3 prerandomizations, no categories, no subsets

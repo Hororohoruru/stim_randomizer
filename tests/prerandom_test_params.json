@@ -5,4 +5,8 @@
                        "constrained": [false, true, true, false],
                        "subsets": [false, false, false, true],
                        "subset_number": [1, 1, 1, 4],
-                       "method": ["pseudo", "pseudo", "pure", "pseudo"]}}
+                       "method": ["pseudo", "pseudo", "pure", "pseudo"],
+                       "id":  ["Unconstrained, no_subsets",
+                               "Constrained, no_subsets, pseudo",
+                               "Constrained, no_subsets, pure",
+                               "Unconstrained, 4_subsets"]}}
