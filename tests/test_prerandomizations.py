@@ -22,22 +22,13 @@ from stim_randomizer.prerandomizations import create_prerandomizations, _pseudo_
 
 from stim_randomizer.subsets import create_stim_sets
 
+# Initialize parameters
 
-@pytest.fixture(scope='session')
-def init_params():
+with open('prerandom_test_params.json', 'r') as config:
+    prerand_params = json.load(config)
 
-    with open('prerandom_test_params.json', 'r') as config:
-        prerand_params = json.load(config)
-
-    return prerand_params
-
-# # Initialize parameters
-#
-# with open('prerandom_test_params.json', 'r') as config:
-#     prerand_params = json.load(config)
-#
-# categories = prerand_params['categories']
-# cases_parameters = prerand_params['cases_parameters']
+categories = prerand_params['categories']
+cases_parameters = prerand_params['cases_parameters']
 
 
 def cleanup_files(*args):
@@ -134,23 +125,10 @@ def set_up_files(file_number, cat=False, categories=None):
 
     return input_folder, output_folder
 
-
-# @pytest.fixture()
-# def setup_test():
-#     """Setup-teardown fixture test"""
-#
-#     temp_input_folder, _ = set_up_files(30, cat=True, categories=categories)
-#
-#     yield
-#
-#     cleanup_files(temp_input_folder)
-
-# @pytest.mark.fixtures()
-def test_file_indexer(init_params):
+def test_file_indexer():
 
     # Parameters
     files_per_category = 30
-    categories = init_params['categories']
 
     # Create dummy input folder and files
     temp_input_folder, _ = set_up_files(files_per_category, cat=True, categories=categories)
@@ -208,13 +186,12 @@ def test_pseudo_label_mapper_raises():
         _pseudo_label_mapper('10', '50')
 
 
-def test_subset_parser(init_params):
+def test_subset_parser():
 
     # Variables
     file_number = 144
     number_of_sets = 4
     files_per_set = file_number // number_of_sets
-    categories = init_params['categories']
 
     subset_folder, _ = set_up_subsets(file_number, number_of_sets, categories)
 
@@ -234,57 +211,57 @@ def test_subset_parser(init_params):
 # From testing_parameters, create a list of dictionaries with the same keys, but only one of the values,
 # to use for the different test cases
 
-# test_cases = [dict(zip(cases_parameters.keys(), case)) for case in zip(*cases_parameters.values())]
-# cases_ids = [c["id"] for c in test_cases]
+test_cases = [dict(zip(cases_parameters.keys(), case)) for case in zip(*cases_parameters.values())]
+cases_ids = [c["id"] for c in test_cases]
 
 
-# @pytest.mark.smoke
-# @pytest.mark.parametrize('case', init_params['test_cases'], ids=init_params['cases_ids'])
-# def test_create_prerandomizations(case):
-#
-#     # TEST CASE 1: 3 prerandomizations, no categories, no subsets
-#     # TEST CASE 2: 3 prerandomizations, 3 categories, no subsets, pseudo method
-#     # TEST CASE 3: 3 prerandomizations, 3 categories, no subsets, pure method
-#     # TEST CASE 4: 3 prerandomizations, 3 categories, 4 subsets, pseudo method
-#
-#     if case['subsets']:
-#         temp_input_folder, temp_output_folder = set_up_subsets(case['file_number'],
-#                                                                case['subset_number'],
-#                                                                case['categories'])
-#
-#     elif case['files_per_category'] != 0:
-#         temp_input_folder, temp_output_folder = set_up_files(case['files_per_category'],
-#                                                              cat=True,
-#                                                              categories=case['categories'])
-#
-#     else:
-#         temp_input_folder, temp_output_folder = set_up_files(case['file_number'])
-#
-#     # Run the function and test
-#     create_prerandomizations(temp_input_folder,
-#                              case['prerandom_number'],
-#                              temp_output_folder,
-#                              categories=case['categories'],
-#                              subsets=case['subsets'],
-#                              constrained=case['constrained'],
-#                              method=case['method'])
-#
-#     prerands = os.listdir(temp_output_folder)
-#     pprint(sorted(os.listdir(temp_output_folder)))
-#
-#     assert len(prerands) == case['prerandom_number'] * case['subset_number']
-#
-#     for file in prerands:
-#         path = os.path.join(temp_output_folder, file)
-#         prerand_df = pd.read_table(path, header=None)
-#
-#         if case['subsets']:
-#             assert len(prerand_df) == case['file_number'] // case['subset_number']
-#         else:
-#             assert len(prerand_df) == case['file_number']
-#
-#     # Delete temp folders and files
-#     cleanup_files(temp_input_folder, temp_output_folder)
+@pytest.mark.smoke
+@pytest.mark.parametrize('case', test_cases, ids=cases_ids)
+def test_create_prerandomizations(case):
+
+    # TEST CASE 1: 3 prerandomizations, no categories, no subsets
+    # TEST CASE 2: 3 prerandomizations, 3 categories, no subsets, pseudo method
+    # TEST CASE 3: 3 prerandomizations, 3 categories, no subsets, pure method
+    # TEST CASE 4: 3 prerandomizations, 3 categories, 4 subsets, pseudo method
+
+    if case['subsets']:
+        temp_input_folder, temp_output_folder = set_up_subsets(case['file_number'],
+                                                               case['subset_number'],
+                                                               case['categories'])
+
+    elif case['files_per_category'] != 0:
+        temp_input_folder, temp_output_folder = set_up_files(case['files_per_category'],
+                                                             cat=True,
+                                                             categories=case['categories'])
+
+    else:
+        temp_input_folder, temp_output_folder = set_up_files(case['file_number'])
+
+    # Run the function and test
+    create_prerandomizations(temp_input_folder,
+                             case['prerandom_number'],
+                             temp_output_folder,
+                             categories=case['categories'],
+                             subsets=case['subsets'],
+                             constrained=case['constrained'],
+                             method=case['method'])
+
+    prerands = os.listdir(temp_output_folder)
+    pprint(sorted(os.listdir(temp_output_folder)))
+
+    assert len(prerands) == case['prerandom_number'] * case['subset_number']
+
+    for file in prerands:
+        path = os.path.join(temp_output_folder, file)
+        prerand_df = pd.read_table(path, header=None)
+
+        if case['subsets']:
+            assert len(prerand_df) == case['file_number'] // case['subset_number']
+        else:
+            assert len(prerand_df) == case['file_number']
+
+    # Delete temp folders and files
+    cleanup_files(temp_input_folder, temp_output_folder)
 
 
 @pytest.mark.rises
