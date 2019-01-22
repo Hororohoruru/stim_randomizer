@@ -30,6 +30,12 @@ with open('prerandom_test_params.json', 'r') as config:
 categories = prerand_params['categories']
 cases_parameters = prerand_params['cases_parameters']
 
+# From testing_parameters, create a list of dictionaries with the same keys, but only one of the values,
+# to use for the different test cases
+
+test_cases = [dict(zip(cases_parameters.keys(), case)) for case in zip(*cases_parameters.values())]
+cases_ids = [c["id"] for c in test_cases]
+
 
 def cleanup_files(*args):
     """Delete all the folders given as input, and the files inside them
@@ -125,6 +131,7 @@ def set_up_files(file_number, cat=False, categories=None):
 
     return input_folder, output_folder
 
+
 def test_file_indexer():
 
     # Parameters
@@ -139,7 +146,7 @@ def test_file_indexer():
 
     assert len(test_index) == len(file_list)
 
-    cleanup_files(temp_input_folder)
+    cleanup_files(temp_input_folder, _)
 
 
 def test_within_category_random_map():
@@ -208,13 +215,6 @@ def test_subset_parser():
     cleanup_files(subset_folder, _)
 
 
-# From testing_parameters, create a list of dictionaries with the same keys, but only one of the values,
-# to use for the different test cases
-
-test_cases = [dict(zip(cases_parameters.keys(), case)) for case in zip(*cases_parameters.values())]
-cases_ids = [c["id"] for c in test_cases]
-
-
 @pytest.mark.smoke
 @pytest.mark.parametrize('case', test_cases, ids=cases_ids)
 def test_create_prerandomizations(case):
@@ -227,12 +227,12 @@ def test_create_prerandomizations(case):
     if case['subsets']:
         temp_input_folder, temp_output_folder = set_up_subsets(case['file_number'],
                                                                case['subset_number'],
-                                                               case['categories'])
+                                                               categories)
 
     elif case['files_per_category'] != 0:
         temp_input_folder, temp_output_folder = set_up_files(case['files_per_category'],
                                                              cat=True,
-                                                             categories=case['categories'])
+                                                             categories=categories)
 
     else:
         temp_input_folder, temp_output_folder = set_up_files(case['file_number'])
@@ -241,7 +241,7 @@ def test_create_prerandomizations(case):
     create_prerandomizations(temp_input_folder,
                              case['prerandom_number'],
                              temp_output_folder,
-                             categories=case['categories'],
+                             categories=categories,
                              subsets=case['subsets'],
                              constrained=case['constrained'],
                              method=case['method'])
@@ -269,14 +269,14 @@ def test_create_prerandomizations_raises(init_params):
 
     temp_input_folder, temp_output_folder = set_up_files(30,
                                                          cat=True,
-                                                         categories=init_params['categories'])
+                                                         categories=categories)
 
     with pytest.raises(ValueError) as excinfo:
 
         create_prerandomizations(temp_input_folder,
                                  3,
                                  temp_output_folder,
-                                 categories=init_params['categories'],
+                                 categories=categories,
                                  subsets=False,
                                  constrained=True,
                                  method='mocos')
