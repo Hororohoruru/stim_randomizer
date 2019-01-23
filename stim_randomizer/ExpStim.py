@@ -21,6 +21,9 @@ class ExpStim:
     path: str
           assign directory attribute
 
+    categories: list of str, default: None
+                list with the names of the categories in the stim. It defaults to None
+
     Attributes
     ----------
 
@@ -67,5 +70,8 @@ class ExpStim:
         all_files = os.listdir(self.path)
 
         categories = list(set([file.split("_")[0] for file in all_files]))
+
+        if len(categories) == len(all_files):
+            categories = None
 
         return categories
