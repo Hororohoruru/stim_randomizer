@@ -34,10 +34,10 @@ class ExpStim:
                 names of the categories of the files. The object will look for category names on the given path
                 upon instantiation if not provided. If it doesn't find any, it will be set to None
 
-    subsets: Subset object
+    subsets: ExpSets object
              wrapper for subset information. It is initialized as None until creation is requested
 
-    prerands: Prerand object
+    prerands: ExpRands object
               wrapper for subset information. It is initialized as None until creation is requested
 
 
@@ -75,3 +75,20 @@ class ExpStim:
             categories = None
 
         return categories
+
+    def request_subsets(self, set_number: int, check: bool = False):
+        """
+        Create an ExpSets() object and then calls create_subsets
+
+        Parameters
+        ----------
+
+        set_number: int
+                    desired number of sets
+
+        check : bool, default: False
+                if True, runs a checkup to make sure that is possible to create subsets of equal length
+                and with the same number of categories per set
+
+        """
+        pass
