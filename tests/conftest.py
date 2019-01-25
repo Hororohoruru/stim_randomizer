@@ -1,5 +1,6 @@
 import pytest
 import tempfile
+import shutil
 
 from stim_randomizer.ExpStim import ExpStim
 
@@ -7,38 +8,47 @@ from stim_randomizer.ExpStim import ExpStim
 categories = ['animal', 'human', 'nature']
 
 
-@pytest.fixture()
+@pytest.fixture(scope='session')
 def setup_cat_dir():
+    """Setup a tmpdir with named files according to the categories"""
     test_dir = tempfile.mkdtemp()
 
     for category in categories:
         for i in range(10):
             tempfile.mkstemp(prefix=(category + '_%02d' % i), dir=test_dir)
 
-    return test_dir
+    yield test_dir
+
+    shutil.rmtree(test_dir)
 
 
-@pytest.fixture()
+@pytest.fixture(scope='session')
 def setup_plain_dir():
+    """Setup a tmpdir with unnamed files"""
     test_dir = tempfile.mkdtemp()
 
     for i in range(10):
         tempfile.mkstemp(dir=test_dir)
 
-    return test_dir
+    yield test_dir
+
+    shutil.rmtree(test_dir)
 
 
-@pytest.fixture()
-def setup_cat(setup_cat_dir):
-
-    test_obj = ExpStim(str(setup_cat_dir), categories)
+@pytest.fixture(scope='module',
+                params=[categories, None])
+def setup_cat(setup_cat_dir, request):
+    """Create an instance of ExpStim using mock stim with categories, once providing the categories and once
+    without providing them
+    """
+    test_obj = ExpStim(str(setup_cat_dir), request.param)
 
     return test_obj
 
 
-@pytest.fixture()
+@pytest.fixture(scope='module')
 def setup_plain(setup_plain_dir):
-
+    """Create an instance of ExpStim using mock stim without categories"""
     test_obj = ExpStim(str(setup_plain_dir))
 
     return test_obj

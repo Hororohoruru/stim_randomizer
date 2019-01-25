@@ -24,10 +24,16 @@ categories = ['animal', 'human', 'nature']
 
 
 def test_instantiation_categories(setup_cat):
+    """test that ExpStim.categories are correctly set up"""
+
+    # GIVEN an instance of ExpStim (providing and not providing explicit categories)
+    # THEN in both cases the returned categories should be correcly assigned
+
     es = setup_cat
 
     assert isinstance(es, ExpStim)
     assert sorted(es.categories) == sorted(categories)
+    assert sorted(es.scan_categories()) == sorted(categories)
 
 
 def test_instantiation_plain(setup_plain):
@@ -45,10 +51,3 @@ def test_class_scanner_and_path(setup_cat_dir):
     assert isinstance(es, ExpStim)
     assert sorted(es.categories) == sorted(categories)
     assert sorted(es.scan_categories()) == sorted(categories)
-
-
-def test_no_subsets_or_prerands_by_default(setup_cat):
-    es = setup_cat
-
-    assert es.subsets is None
-    assert es.prerands is None
