@@ -9,6 +9,8 @@ Mail: juanjesustorre@gmail.com
 import glob
 import os
 
+from stim_randomizer.ExpSets import ExpSets
+
 
 class ExpStim:
     """
@@ -91,4 +93,5 @@ class ExpStim:
                 and with the same number of categories per set
 
         """
-        pass
+        self.subsets = ExpSets()
+        self.subsets.create_subsets(set_number, check)
