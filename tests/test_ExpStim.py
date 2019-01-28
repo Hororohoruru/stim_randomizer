@@ -5,25 +5,14 @@ Author: Juan Jesus Torre Tresols
 Mail: juanjesustorre@gmail.com
 """
 
-import json
-import os
-import glob
-import pytest
-import shutil
-import tempfile
-
-import numpy as np
-import pandas as pd
-
-from pprint import pprint
-
 from stim_randomizer.ExpStim import ExpStim
+from stim_randomizer.ExpSets import ExpSets
 
 
 categories = ['animal', 'human', 'nature']
 
 
-def test_instantiation_categories(setup_cat):
+def test_instance_with_categories_assigns_categories_correctly(setup_cat):
     """test that ExpStim.categories are correctly set up"""
 
     # GIVEN an instance of ExpStim (providing and not providing explicit categories)
@@ -31,23 +20,42 @@ def test_instantiation_categories(setup_cat):
 
     es = setup_cat
 
-    assert isinstance(es, ExpStim)
     assert sorted(es.categories) == sorted(categories)
-    assert sorted(es.scan_categories()) == sorted(categories)
 
 
-def test_instantiation_plain(setup_plain):
-    es = setup_plain
-
-    assert isinstance(es, ExpStim)
-    assert es.categories is None
-
-
-def test_class_scanner_and_path(setup_cat_dir):
+def test_path_is_assigned_correctly(setup_cat_dir):
     tmpdir = str(setup_cat_dir)
     es = ExpStim(tmpdir)
 
     assert es.path == tmpdir
-    assert isinstance(es, ExpStim)
-    assert sorted(es.categories) == sorted(categories)
+
+
+def test_scan_categories_finds_categories(setup_cat):
+    es = setup_cat
+
     assert sorted(es.scan_categories()) == sorted(categories)
+
+
+def test_scan_categories_assigns_none_when_no_categories(setup_plain):
+    es = setup_plain
+
+    assert es.scan_categories() is None
+
+
+def test_instance_without_categories_assigns_correct_attribute(setup_plain):
+    es = setup_plain
+
+    assert es.categories is None
+
+
+# def test_request_subsets_creates_subsets(setup_cat, mocker):
+#
+#     mock_subset = mocker.patch('stim_randomizer.ExpSets')
+#     experiment = setup_cat
+#
+#     experiment.request_subsets(15)
+#
+#     mock_subset.assert_called_with(15)
+#     mock_subset.return_value.create_subsets.assert_called_once()
+
+
