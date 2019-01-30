@@ -48,6 +48,13 @@ def test_instance_without_categories_assigns_correct_attribute(setup_plain):
     assert es.categories is None
 
 
+def test_request_subsets_creates_expsets_instance(setup_cat):
+
+    experiment = setup_cat
+    experiment.request_subsets(15)
+
+    assert isinstance(experiment.subsets, ExpSets)
+
 # def test_request_subsets_creates_subsets(setup_cat, mocker):
 #
 #     mock_subset = mocker.patch('stim_randomizer.ExpSets')
