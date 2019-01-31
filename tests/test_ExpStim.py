@@ -1,11 +1,11 @@
 """
-Tests for ExpStim.py
+Tests for core.py
 
 Author: Juan Jesus Torre Tresols
 Mail: juanjesustorre@gmail.com
 """
 
-from stim_randomizer.ExpStim import ExpStim
+from stim_randomizer.core import ExpStim
 
 
 categories = ['animal', 'human', 'nature']
@@ -57,7 +57,7 @@ def test_request_subsets_creates_expsets_instance(setup_cat):
 
 def test_request_subsets_creates_subsets(setup_cat, mocker):
 
-    mock_subset = mocker.patch('stim_randomizer.ExpStim.ExpSets')
+    mock_subset = mocker.patch('stim_randomizer.core.ExpSets')
     experiment = setup_cat
 
     experiment.request_subsets(15)
