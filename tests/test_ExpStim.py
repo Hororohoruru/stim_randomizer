@@ -6,7 +6,6 @@ Mail: juanjesustorre@gmail.com
 """
 
 from stim_randomizer.ExpStim import ExpStim
-from stim_randomizer.ExpSets import ExpSets
 
 
 categories = ['animal', 'human', 'nature']
@@ -53,16 +52,17 @@ def test_request_subsets_creates_expsets_instance(setup_cat):
     experiment = setup_cat
     experiment.request_subsets(15)
 
-    assert isinstance(experiment.subsets, ExpSets)
+    # assert isinstance(experiment.subsets, ExpSets)
 
-# def test_request_subsets_creates_subsets(setup_cat, mocker):
-#
-#     mock_subset = mocker.patch('stim_randomizer.ExpSets')
-#     experiment = setup_cat
-#
-#     experiment.request_subsets(15)
-#
-#     mock_subset.assert_called_with(15)
-#     mock_subset.return_value.create_subsets.assert_called_once()
+
+def test_request_subsets_creates_subsets(setup_cat, mocker):
+
+    mock_subset = mocker.patch('stim_randomizer.ExpStim.ExpSets')
+    experiment = setup_cat
+
+    experiment.request_subsets(15)
+
+    mock_subset.return_value.create_subsets.assert_called_with(15, False)
+    mock_subset.return_value.create_subsets.assert_called_once()
 
 

@@ -9,8 +9,6 @@ Mail: juanjesustorre@gmail.com
 import glob
 import os
 
-from stim_randomizer.ExpSets import ExpSets
-
 
 class ExpStim:
     """
@@ -95,3 +93,9 @@ class ExpStim:
         """
         self.subsets = ExpSets()
         self.subsets.create_subsets(set_number, check)
+
+
+class ExpSets:
+    """Placeholder docstring"""
+    def create_subsets(self, set_num, check):
+        pass
