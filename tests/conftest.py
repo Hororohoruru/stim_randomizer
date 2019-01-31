@@ -2,7 +2,7 @@ import pytest
 import tempfile
 import shutil
 
-from stim_randomizer.ExpStim import ExpStim
+from stim_randomizer.core import ExpStim
 
 
 categories = ['animal', 'human', 'nature']
