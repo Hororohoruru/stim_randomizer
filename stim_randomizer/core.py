@@ -6,8 +6,11 @@ Mail: juanjesustorre@gmail.com
 
 """
 
+import csv
 import glob
 import os
+
+from random import shuffle
 
 
 class ExpStim:
@@ -76,7 +79,7 @@ class ExpStim:
 
         return categories
 
-    def request_subsets(self, set_number: int, dir_type: str = 'parent', check: bool = False):
+    def request_subsets(self, set_number: int, dir_type: str = 'parent'):
         """
         Create an ExpSets() object and then calls create_subsets
 
@@ -86,16 +89,12 @@ class ExpStim:
         set_number: int
                     desired number of sets
 
-        check : bool, default: False
-                if True, runs a checkup to make sure that is possible to create subsets of equal length
-                and with the same number of categories per set
-
         dir_type: {'parent', 'child'}, default: parent
                   required parameter for the ExpSets class
 
         """
         self.subsets = ExpSets(self.path, dir_type)
-        self.subsets.create_subsets(set_number, check)
+        self.subsets.create_subsets(set_number, self.categories)
 
 
 class ExpSets:
@@ -110,14 +109,138 @@ class ExpSets:
     root_path: str
                absolute path to the directory that contains the stim files
 
-    out_dir: {'parent', 'child'}
-             'parent' will create a new 'subsets' dir at root_path's parent
-             dir. 'child' will create the same new dir inside root_path
+    dir_type: {'parent', 'child'}
+              handles where to create the output directory with the helper
+              method _get_dir
+
+    Attributes
+    ----------
+
+    root_path: str
+               absolute path to the stim files
+
+    dir_type: {'parent', 'child'}
+              type of out_dir generation
+
+    out_dir: str
+             absolute path to the files containing the subset info
     """
 
-    def __init__(self, root_path: str, out_dir: str):
+    def __init__(self, root_path: str, dir_type: str) -> None:
         self.root_path = root_path
-        self.out_dir = out_dir
+        self.dir_type = dir_type
+        self.out_dir = self._get_dir(self.dir_type)
 
-    def create_subsets(self, set_num, check):
-        pass
+    def _get_dir(self, dir_type: str) -> str:
+        """
+        Check desired dir_type and create out_dir where requested
+
+        Parameters
+        ----------
+
+        dir_type: {'parent', 'child'}
+                  'parent' creates the 'subsets' folder in the parent dir
+                  of the root dir, and 'child' creates it inside the root dir
+
+        Returns
+        -------
+
+        out_dir: str
+                 absolute path of the output directory
+        """
+
+        if dir_type == 'parent':
+            out_dir = os.path.join(self.root_path,
+                                   '../subsets')
+        elif dir_type == 'child':
+            out_dir = os.path.join(self.root_path,
+                                   'subsets')
+        else:
+            raise ValueError('dir_type must be either "parent" or "child"')
+
+        if not os.path.exists(out_dir):
+            os.mkdir(out_dir)
+
+        return out_dir
+
+    def create_subsets(self, set_num: int, categories: list or None) -> None:
+        """
+        Method to create subsets. The subsets will be csv files containing
+        names of the files from self.root_dir. Each subset will contain the
+        same number of files and the same number of files per category. If
+        this is not possible, an exception will be thrown and the function
+        will stop.
+
+        Parameters
+        ----------
+
+        set_num: int
+                 desired number of sets
+
+        categories: list or None
+                    names of the categories passed from the ExpStim class,
+                    if any
+
+        Returns
+        -------
+
+        None
+        """
+
+        total_stim = sorted([file for file in os.listdir(self.root_path) if 'subsets' not in file])
+
+        if len(total_stim) % set_num != 0:
+            remaining_stim = len(total_stim) % set_num
+            error_set_msg = ("It is not possible to equally divide '{0}' stim into '{1}' sets."
+                             " '{2}' files would be remaining".format(total_stim, set_num, remaining_stim))
+
+            raise ValueError(error_set_msg)
+
+        files_per_set = len(total_stim) // set_num
+
+        try:
+            if files_per_set % len(categories) != 0:
+                remaining_cat_stim = files_per_set % len(categories)
+                error_cat_msg = ('It is not possible to divide the files and preserve the same number'
+                                 'of categories per subset for %d categories. %d files would be '
+                                 'remaining' % set_num, remaining_cat_stim)
+
+                raise ValueError(error_cat_msg)
+
+        except TypeError as e:
+            raise TypeError('The stim you are trying to divide has no categories') from e
+
+        else:
+            files_per_cat_per_set = files_per_set // len(categories)
+
+        subsets = {"subset_" + str(i + 1): [] for i in range(set_num)}
+
+        # For each category
+        for category in categories:
+
+            # ...get the files...
+            cat_files = [file for file in total_stim if category in file]
+
+            # ...shuffle them...
+            shuffle(cat_files)
+
+            # ...divide in as many chunks as sets...
+            cat_chunks = [cat_files[n: n + files_per_cat_per_set] for n in
+                          range(0, len(cat_files), files_per_cat_per_set)]
+
+            # ...and assign each chunk to a set.
+
+            for i, subset in enumerate(subsets.keys()):
+                subsets[subset].extend(cat_chunks[i])
+
+            # Save the subsets in files
+            for subset in subsets.keys():
+
+                subsets_path = os.path.join(self.out_dir, subset + '.tsv')
+
+                with open(subsets_path, 'w') as csvfile:
+
+                    subsetwriter = csv.writer(csvfile)
+
+                    for stim in subsets[subset]:
+                        subsetwriter.writerow([stim])

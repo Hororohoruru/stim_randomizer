@@ -5,8 +5,7 @@ Author: Juan Jesus Torre Tresols
 Mail: juanjesustorre@gmail.com
 """
 
-from stim_randomizer.core import ExpStim
-
+from stim_randomizer.core import ExpStim, ExpSets
 
 categories = ['animal', 'human', 'nature']
 
@@ -52,7 +51,7 @@ def test_request_subsets_creates_expsets_instance(setup_expstim_cat):
     experiment = setup_expstim_cat
     experiment.request_subsets(15)
 
-    # assert isinstance(experiment.subsets, ExpSets)
+    assert isinstance(experiment.subsets, ExpSets)
 
 
 def test_request_subsets_creates_subsets(setup_expstim_cat, mocker):
