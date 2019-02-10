@@ -52,9 +52,9 @@ class ExpStim:
         if categories:
             self.categories = categories
         else:
-            self.categories = self.scan_categories()
+            self.categories = self._scan_categories()
 
-    def scan_categories(self) -> list or None:
+    def _scan_categories(self) -> list or None:
         """
         Looks for categories in self.path and returns a list with the categories found, or None if it does not find
         any
@@ -76,7 +76,7 @@ class ExpStim:
 
         return categories
 
-    def request_subsets(self, set_number: int, check: bool = False):
+    def request_subsets(self, set_number: int, dir_type: str = 'parent', check: bool = False):
         """
         Create an ExpSets() object and then calls create_subsets
 
@@ -90,12 +90,34 @@ class ExpStim:
                 if True, runs a checkup to make sure that is possible to create subsets of equal length
                 and with the same number of categories per set
 
+        dir_type: {'parent', 'child'}, default: parent
+                  required parameter for the ExpSets class
+
         """
-        self.subsets = ExpSets()
+        self.subsets = ExpSets(self.path, dir_type)
         self.subsets.create_subsets(set_number, check)
 
 
 class ExpSets:
-    """Placeholder docstring"""
+    """
+    The Expsets class will divide the stim in groups, and create
+    csv files with the names of the files that are part of each set,
+    so they can be easily loaded from the root folder by the experiment.
+
+    Parameters
+    ----------
+
+    root_path: str
+               absolute path to the directory that contains the stim files
+
+    out_dir: {'parent', 'child'}
+             'parent' will create a new 'subsets' dir at root_path's parent
+             dir. 'child' will create the same new dir inside root_path
+    """
+
+    def __init__(self, root_path: str, out_dir: str):
+        self.root_path = root_path
+        self.out_dir = out_dir
+
     def create_subsets(self, set_num, check):
         pass
