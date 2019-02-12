@@ -74,12 +74,12 @@ class ExpStim:
 
         categories = list(set([file.split("_")[0] for file in all_files]))
 
-        if len(categories) == len(all_files):
+        if len(categories) == len(all_files) or len(categories) > (len(all_files) // 2):
             categories = None
 
         return categories
 
-    def request_subsets(self, set_number: int, dir_type: str = 'parent'):
+    def request_subsets(self, set_number: int, dir_type: str = 'parent') -> None:
         """
         Create an ExpSets() object and then calls create_subsets
 
@@ -92,9 +92,41 @@ class ExpStim:
         dir_type: {'parent', 'child'}, default: parent
                   required parameter for the ExpSets class
 
+        Returns
+        -------
+
+        None
         """
+
         self.subsets = ExpSets(self.path, dir_type)
         self.subsets.create_subsets(set_number, self.categories)
+
+    def request_prerands(self, prerand_number: int, subset_info: 'ExpSets' or None, method: str) -> None:
+        """
+        Create an ExPrerands() object and call create_prerands
+
+        Parameters
+        ----------
+
+        prerand_number: int
+                        desired number of prerands
+
+        subset_info: ExpSets instance or None
+                     if subsets have already been created, this method will create prerand_number for each
+                     one of them, if self.subsets is None, it will create the prerands on a list of all the
+                     stim
+
+        method: {'unconstrained', 'pseudo_con', 'pure_con'}
+                required parameter for the ExPrerands class
+
+        Returns
+        -------
+
+        None
+        """
+
+        self.prerands = ExPrerands()
+        self.prerands.create_prerands(prerand_number, self.categories, method)
 
 
 class ExpSets:
@@ -166,7 +198,7 @@ class ExpSets:
     def create_subsets(self, set_num: int, categories: list or None) -> None:
         """
         Method to create subsets. The subsets will be csv files containing
-        names of the files from self.root_dir. Each subset will contain the
+        names of the files from self.root_path. Each subset will contain the
         same number of files and the same number of files per category. If
         this is not possible, an exception will be thrown and the function
         will stop.
@@ -244,3 +276,64 @@ class ExpSets:
 
                     for stim in subsets[subset]:
                         subsetwriter.writerow([stim])
+
+
+class ExPrerands:
+    """
+    The ExPrerands class will create constrained prerandomizations for the provided groups
+    of stimuli, be them a whole list or different subsets saved in csv files. The output
+    will be saved in csv files.
+
+    Parameters
+    ----------
+
+    root_path: str
+               absolute path to the directory that contains the stim files
+
+    subsets_path: str or None
+                  absolute path to the directory that contains the subset files
+
+    dir_type: {'parent', 'child'}
+              handles where to create the output directory with the helper
+              method _get_dir
+
+    Attributes
+    ----------
+
+    root_path: str
+               absolute path to the stim files
+
+    dir_type: {'parent', 'child'}
+              handles where to create the output directory with the helper
+              method _get_dir
+
+    out_dir: str
+             absolute path to the files containing the prerand info
+    """
+
+    def create_prerands(self, prerand_num: int, categories: list or None, method: str) -> None:
+        """
+        Method to create prerandomizations. The subsets will be csv files containing
+        names of the files from self.root_path or in self.subsets_path, depending on
+        the existence of subsets. Each prerand will contain the same filenames, but
+        in different randomized orders.
+
+        Parameters
+        ----------
+
+        prerand_num: int
+                     desired number of sets
+
+        categories: list or None
+                    names of the categories passed from the ExpStim class, if any
+
+        method: {'unconstrained', 'pseudo_con', 'pure_con'}
+                  prerandomization method
+
+        Returns
+        -------
+
+        None
+        """
+
+        pass

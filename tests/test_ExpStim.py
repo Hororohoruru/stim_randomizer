@@ -5,7 +5,9 @@ Author: Juan Jesus Torre Tresols
 Mail: juanjesustorre@gmail.com
 """
 
-from stim_randomizer.core import ExpStim, ExpSets
+import pytest
+
+from stim_randomizer.core import ExpStim, ExpSets, ExPrerands
 
 categories = ['animal', 'human', 'nature']
 
@@ -46,6 +48,7 @@ def test_instance_without_categories_assigns_correct_attribute(setup_expstim_pla
     assert es.categories is None
 
 
+@pytest.mark.subsets
 def test_request_subsets_creates_expsets_instance(setup_expstim_cat):
 
     experiment = setup_expstim_cat
@@ -54,6 +57,7 @@ def test_request_subsets_creates_expsets_instance(setup_expstim_cat):
     assert isinstance(experiment.subsets, ExpSets)
 
 
+@pytest.mark.subsets
 def test_request_subsets_creates_subsets(setup_expstim_cat, mocker):
 
     mock_subset = mocker.patch('stim_randomizer.core.ExpSets')
@@ -64,4 +68,26 @@ def test_request_subsets_creates_subsets(setup_expstim_cat, mocker):
     mock_subset.return_value.create_subsets.assert_called_with(10, sorted(categories))
     mock_subset.return_value.create_subsets.assert_called_once()
 
+
+@pytest.mark.prerands
+@pytest.mark.parametrize('method', ['unconstrained', 'pure_con', 'pseudo_con'])
+def test_request_prerands_creates_exprerands_instance(setup_expstim_cat, method):
+
+    experiment = setup_expstim_cat
+    experiment.request_prerands(5, experiment.subsets, method)
+
+    assert isinstance(experiment.prerands, ExPrerands)
+
+
+@pytest.mark.prerands
+@pytest.mark.parametrize('method', ['unconstrained', 'pure_con', 'pseudo_con'])
+def test_request_subsets_creates_subsets(setup_expstim_cat, mocker, method):
+
+    mock_prerands = mocker.patch('stim_randomizer.core.ExPrerands')
+    experiment = setup_expstim_cat
+
+    experiment.request_prerands(5, experiment.subsets, method)
+
+    mock_prerands.return_value.create_prerands.assert_called_with(5, experiment.categories, method)
+    mock_prerands.return_value.create_prerands.assert_called_once()
 
