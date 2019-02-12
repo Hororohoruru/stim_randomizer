@@ -53,7 +53,7 @@ class ExpStim:
         self.path = path
 
         if categories:
-            self.categories = categories
+            self.categories = sorted(categories)
         else:
             self.categories = self._scan_categories()
 
@@ -201,9 +201,9 @@ class ExpSets:
         try:
             if files_per_set % len(categories) != 0:
                 remaining_cat_stim = files_per_set % len(categories)
-                error_cat_msg = ('It is not possible to divide the files and preserve the same number'
-                                 'of categories per subset for %d categories. %d files would be '
-                                 'remaining' % set_num, remaining_cat_stim)
+                error_cat_msg = ("It is not possible to divide the files and preserve the same number of categories "
+                                 "per subset for '{0}' categories. '{1}' files would be "
+                                 "remaining".format(set_num, remaining_cat_stim))
 
                 raise ValueError(error_cat_msg)
 

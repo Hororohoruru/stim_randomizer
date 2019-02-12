@@ -49,7 +49,7 @@ def test_instance_without_categories_assigns_correct_attribute(setup_expstim_pla
 def test_request_subsets_creates_expsets_instance(setup_expstim_cat):
 
     experiment = setup_expstim_cat
-    experiment.request_subsets(15)
+    experiment.request_subsets(10)
 
     assert isinstance(experiment.subsets, ExpSets)
 
@@ -59,9 +59,9 @@ def test_request_subsets_creates_subsets(setup_expstim_cat, mocker):
     mock_subset = mocker.patch('stim_randomizer.core.ExpSets')
     experiment = setup_expstim_cat
 
-    experiment.request_subsets(15)
+    experiment.request_subsets(10, sorted(categories))
 
-    mock_subset.return_value.create_subsets.assert_called_with(15, False)
+    mock_subset.return_value.create_subsets.assert_called_with(10, sorted(categories))
     mock_subset.return_value.create_subsets.assert_called_once()
 
 
