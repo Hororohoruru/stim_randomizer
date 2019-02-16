@@ -74,7 +74,7 @@ def test_request_subsets_creates_subsets(setup_expstim_cat, mocker):
 def test_request_prerands_creates_exprerands_instance(setup_expstim_cat, method):
 
     experiment = setup_expstim_cat
-    experiment.request_prerands(5, experiment.subsets, method)
+    experiment.request_prerands(5, method)
 
     assert isinstance(experiment.prerands, ExPrerands)
 
@@ -86,7 +86,7 @@ def test_request_subsets_creates_subsets(setup_expstim_cat, mocker, method):
     mock_prerands = mocker.patch('stim_randomizer.core.ExPrerands')
     experiment = setup_expstim_cat
 
-    experiment.request_prerands(5, experiment.subsets, method)
+    experiment.request_prerands(5, method)
 
     mock_prerands.return_value.create_prerands.assert_called_with(5, experiment.categories, method)
     mock_prerands.return_value.create_prerands.assert_called_once()

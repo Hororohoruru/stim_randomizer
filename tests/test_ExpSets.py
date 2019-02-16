@@ -5,7 +5,6 @@ Author: Juan Jesus Torre Tresols
 Mail: juanjesustorre@gmail.com
 """
 
-import glob
 import os
 import pytest
 

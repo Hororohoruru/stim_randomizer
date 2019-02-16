@@ -2,8 +2,7 @@ import pytest
 import tempfile
 import shutil
 
-from stim_randomizer.core import ExpStim
-from stim_randomizer.core import ExpSets
+from stim_randomizer.core import ExpStim, ExpSets, ExPrerands
 
 
 categories = ['animal', 'human', 'nature']
@@ -60,6 +59,17 @@ def setup_expstim_plain(setup_plain_dir):
 def setup_expsets_cat(setup_cat_dir, request):
     """Create an instance of ExpSets using mock stim with categories"""
     test_obj = ExpSets(str(setup_cat_dir), request.param)
+
+    yield test_obj
+
+    shutil.rmtree(test_obj.out_dir)
+
+
+@pytest.fixture(scope='module',
+                params=['parent', 'child'])
+def setup_exprerands_from_subsets(setup_expsets_cat, request):
+    """Create an instance of ExPrerands from subsetsusing mock stim with categories"""
+    test_obj = ExPrerands(setup_expsets_cat.root_path, setup_expsets_cat.out_dir, request.param)
 
     yield test_obj
 

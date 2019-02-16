@@ -101,7 +101,7 @@ class ExpStim:
         self.subsets = ExpSets(self.path, dir_type)
         self.subsets.create_subsets(set_number, self.categories)
 
-    def request_prerands(self, prerand_number: int, subset_info: 'ExpSets' or None, method: str) -> None:
+    def request_prerands(self, prerand_number: int, method: str = 'pseudo_con', dir_type: str = 'parent') -> None:
         """
         Create an ExPrerands() object and call create_prerands
 
@@ -111,13 +111,11 @@ class ExpStim:
         prerand_number: int
                         desired number of prerands
 
-        subset_info: ExpSets instance or None
-                     if subsets have already been created, this method will create prerand_number for each
-                     one of them, if self.subsets is None, it will create the prerands on a list of all the
-                     stim
-
         method: {'unconstrained', 'pseudo_con', 'pure_con'}
                 required parameter for the ExPrerands class
+
+        dir_type: {'parent', 'child'}, default: parent
+                  required parameter for the ExpSets class
 
         Returns
         -------
@@ -125,7 +123,11 @@ class ExpStim:
         None
         """
 
-        self.prerands = ExPrerands()
+        if self.subsets:
+            self.prerands = ExPrerands(self.path, self.subsets.out_dir, dir_type)
+        else:
+            self.prerands = ExPrerands(self.path, self.subsets, dir_type)
+
         self.prerands.create_prerands(prerand_number, self.categories, method)
 
 
@@ -303,6 +305,9 @@ class ExPrerands:
     root_path: str
                absolute path to the stim files
 
+    subsets_path: str or None
+                  absolute path to the directory that contains the subset files
+
     dir_type: {'parent', 'child'}
               handles where to create the output directory with the helper
               method _get_dir
@@ -310,6 +315,44 @@ class ExPrerands:
     out_dir: str
              absolute path to the files containing the prerand info
     """
+
+    def __init__(self, root_path: str, subsets_path: str or None, dir_type: str) -> None:
+        self.root_path = root_path
+        self.subsets_path = subsets_path
+        self.dir_type = dir_type
+        self.out_dir = self._get_dir(self.dir_type)
+
+    def _get_dir(self, dir_type: str) -> str:
+        """
+        Check desired dir_type and create out_dir where requested
+
+        Parameters
+        ----------
+
+        dir_type: {'parent', 'child'}
+                  'parent' creates the 'prerands' folder in the parent dir
+                  of the root dir, and 'child' creates it inside the root dir
+
+        Returns
+        -------
+
+        out_dir: str
+                 absolute path of the output directory
+        """
+
+        if dir_type == 'parent':
+            out_dir = os.path.join(self.root_path,
+                                   '../prerands')
+        elif dir_type == 'child':
+            out_dir = os.path.join(self.root_path,
+                                   'prerands')
+        else:
+            raise ValueError('dir_type must be either "parent" or "child"')
+
+        if not os.path.exists(out_dir):
+            os.mkdir(out_dir)
+
+        return out_dir
 
     def create_prerands(self, prerand_num: int, categories: list or None, method: str) -> None:
         """
