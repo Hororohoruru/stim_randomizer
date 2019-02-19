@@ -7,10 +7,12 @@ Mail: juanjesustorre@gmail.com
 """
 
 import csv
-import glob
 import os
 
-from random import shuffle
+import pandas as pd
+
+from random import shuffle, sample, choices
+from ast import literal_eval as make_tuple
 
 
 class ExpStim:
@@ -354,6 +356,38 @@ class ExPrerands:
 
         return out_dir
 
+    @staticmethod
+    def _subset_parser(subsets_path):
+        """Parses the .tsv files at the input directory and put the filenames into lists to be used for prerandomizations
+
+        Parameters
+        ----------
+
+        subsets_path: str
+                      directory containing tsv files with the filenames used in each subset
+
+        Returns
+        -------
+
+        parsed_files: list
+                      each element of the list is a sublist containing all the filenames of a given subset
+
+        """
+
+        parsed_files = []
+
+        subsets = sorted(os.listdir(subsets_path))
+
+        for subset in subsets:
+            subset_path = os.path.join(subsets_path, subset)
+
+            stim = pd.read_table(subset_path, header=None)
+            stim_list = [make_tuple(pair) for pair in list(stim[0])]
+
+            parsed_files.append(stim_list)
+
+        return parsed_files
+
     def create_prerands(self, prerand_num: int, categories: list or None, method: str) -> None:
         """
         Method to create prerandomizations. The subsets will be csv files containing
@@ -379,4 +413,11 @@ class ExPrerands:
         None
         """
 
-        pass
+        if self.subsets_path:
+            all_stim = self._subset_parser(self.subsets_path)
+        else:
+            all_stim = [sorted(os.listdir(self.root_path))]
+
+        for subset_num, subset in enumerate(all_stim):
+            if not categories or method == 'unconstrained':
+                final_list = sample(subset, len(subset))
