@@ -8,6 +8,7 @@ Mail: juanjesustorre@gmail.com
 import os
 import pytest
 
+import numpy as np
 import pandas as pd
 
 from stim_randomizer.core import ExPrerands
@@ -49,3 +50,113 @@ def test_subset_parser(setup_exprerands_from_subsets):
     parsed_sets = esets._subset_parser(esets.subsets_path)
 
     assert len(parsed_sets) == len(os.listdir(esets.subsets_path))
+
+
+@pytest.mark.label_mapper
+def test_pseudo_label_mapper(setup_exprerands_from_subsets):
+    esets = setup_exprerands_from_subsets
+
+    labels = 10
+    elements = 50
+
+    test_map = esets._pseudo_label_mapper(labels, elements)
+
+    assert all(np.diff(test_map) != 0)
+    assert len(test_map) == labels * elements
+
+
+@pytest.mark.rises
+def test_pseudo_label_mapper_raises(setup_exprerands_from_subsets):
+    esets = setup_exprerands_from_subsets
+
+    with pytest.raises(TypeError):
+        esets._pseudo_label_mapper('10', '50')
+
+
+@pytest.mark.label_mapper
+def test_pure_label_mapper(setup_exprerands_from_subsets):
+    esets = setup_exprerands_from_subsets
+
+    labels = 10
+    elements = 50
+
+    test_map = esets._pure_label_mapper(labels, elements)
+
+    assert all(np.diff(test_map) != 0)
+    assert len(test_map) == labels * elements
+
+
+@pytest.mark.rises
+def test_pseudo_label_mapper_raises(setup_exprerands_from_subsets):
+    esets = setup_exprerands_from_subsets
+
+    with pytest.raises(TypeError):
+        esets._pure_label_mapper('10', '50')
+
+
+def test_within_category_random_map(setup_exprerands_from_subsets):
+    esets = setup_exprerands_from_subsets
+
+    test_labels = esets._pseudo_label_mapper(6, 12)
+    test_map = esets._within_category_random_map(test_labels)
+
+    assert len(np.unique(test_map)) == len(test_map)
+
+
+def test_file_indexer(setup_exprerands_from_subsets):
+    esets = setup_exprerands_from_subsets
+
+    # Test
+    file_list = [file for file in sorted(os.listdir(esets.root_path))
+                 if 'subsets' not in file and 'prerands' not in file]
+
+    test_index = esets._file_indexer(categories, file_list)
+
+    assert len(test_index) == len(file_list)
+
+
+@pytest.mark.smoke
+@pytest.mark.parametrize('method', ['pseudo_con', 'pure_con', 'unconstrained'])
+def test_create_prerandomizations_from_subsets(method, setup_exprerands_from_subsets):
+    esets = setup_exprerands_from_subsets
+    file_number = [file for file in sorted(os.listdir(esets.root_path))
+                   if 'subsets' not in file and 'prerands' not in file]
+
+    subset_number = len(os.listdir(esets.subsets_path))
+    prerand_number = 4
+
+    esets.create_prerands(prerand_number, categories, method)
+    prerands = sorted(os.listdir(esets.out_dir))
+
+    assert len(prerands) == prerand_number * subset_number
+
+    for file in prerands:
+        path = os.path.join(esets.out_dir, file)
+        prerand_df = pd.read_table(path, header=None)
+
+        assert len(prerand_df) == file_number // subset_number
+
+
+@pytest.mark.smoke
+@pytest.mark.parametrize('method', ['pseudo_con', 'pure_con', 'unconstrained'])
+def test_create_prerandomizations_from_expstim(method, setup_exprerands_from_expstim):
+    esets = setup_exprerands_from_expstim
+    file_list = [file for file in sorted(os.listdir(esets.root_path))
+                   if 'subsets' not in file and 'prerands' not in file]
+
+    prerand_number = 4
+
+    esets.create_prerands(prerand_number, categories, method)
+    prerands = sorted(os.listdir(esets.out_dir))
+
+    assert len(prerands) == prerand_number
+
+    for file in prerands:
+        path = os.path.join(esets.out_dir, file)
+
+        if method == 'unconstrained':
+            prerand_df = pd.read_table(path)
+        else:
+            prerand_df = pd.read_table(path, header=None)
+
+        assert len(prerand_df) == len(file_list)

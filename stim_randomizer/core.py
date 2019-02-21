@@ -9,6 +9,7 @@ Mail: juanjesustorre@gmail.com
 import csv
 import os
 
+import numpy as np
 import pandas as pd
 
 from random import shuffle, sample, choices
@@ -388,6 +389,271 @@ class ExPrerands:
 
         return parsed_files
 
+    @staticmethod
+    def _pseudo_label_mapper(labels: int, elements: int) -> 'np.array':
+        """
+        Creates an array of len(labels) * elements length, randomly mapped so two consecutive
+        elements are never of the same category (same number).
+
+        Chunks containing one number per category will be randomized and inserted on the final list.
+        At each iteration, the function will check if the first element of the current chunk is the
+        same as the last element of the previous one. If this is the case, the first element of the
+        current chunk will be swapped with the last one.
+
+        This function assumes that the set has the same number of elements for each category.
+
+        Parameters
+        ----------
+        labels: int
+                desired number of categories
+
+        elements: int
+                  number of stimuli per category
+
+        Returns
+        -------
+        label_array: np.array
+                     randomized array of len(range(labels)) * elements) of numbers where no two consecutive elements are
+                     the same value
+        """
+
+        for blocks in range(0, elements):
+            chunk = np.arange(labels)
+            np.random.shuffle(chunk)
+
+            try:
+                if chunk[0] == label_list[-1]:
+                    chunk[0], chunk[-1] = chunk[-1], chunk[0]
+
+            except NameError:
+                label_list = []
+
+            label_list.extend(chunk)
+
+        label_array = np.array(label_list)
+
+        return label_array
+
+    @staticmethod
+    def _send_back(value: int, times: int, lst: list) -> None:
+        """Helper function of pure_label_mapper. Inserts the value given at input in a position where the previous and
+        next values are not the same.
+
+        Note that the function performs the insertions in place, and does not return a new list.
+
+        Parameters
+        ----------
+
+        value: int
+               number that is going to be inserted on the list
+
+        times: int
+               number of times to insert the designated value
+
+        lst: list
+             input list where the values are going to be inserted
+
+        Returns
+        -------
+
+        None
+        """
+
+        idx = len(lst) - 2
+
+        for _ in range(times):
+            while lst[idx] == value or lst[idx - 1] == value:
+                idx -= 1
+
+            lst.insert(idx, value)
+
+    def _pure_label_mapper(self, labels: int, elements: int) -> 'np.array':
+        """Array of len(labels) * elements length, randomly mapped so two consecutive elements are never of the same
+        category (same number).
+
+        The elements of the array will be generated one by one, picking from a population of the possible values, using
+        weights to control the frequency. At each iteration, the selected element's weight will be set to 0 for the next
+        iteration, and this value will be subtracted 1. In the end, there will be an equal number of each one of the
+        population's values.
+
+        The helper function send_back will take care of cases where the only values remaining are already the same as the
+        one chosen by the last iteration (i.e., the population is empty).
+
+        Parameters
+        ----------
+        labels: int
+                desired number of categories
+
+        elements: int
+                  number of stimuli per category
+
+        Returns
+        -------
+        label_array: np.array
+                     randomized array of len(range(labels)) * elements) of numbers where no two consecutive elements are
+                     the same value
+        """
+
+        population = list(range(labels))
+
+        weights = [elements] * labels
+        label_list = []
+        prev = None
+
+        for i in range(labels * elements):
+            if prev is not None:
+                # Store the previous value and set its weight to 0 for the next iteration
+                old_weight = weights[prev]
+                weights[prev] = 0
+
+            try:
+                chosen = choices(population, weights)[0]
+
+            except IndexError:
+                # If all the weights are 0, the helper function will put the remaining values where
+                # they do not violate the repetition constrain
+                self._send_back(prev, old_weight, label_list)
+                break
+
+            label_list.append(chosen)
+            weights[chosen] -= 1
+
+            if prev is not None:
+                # Restore weight
+                weights[prev] = old_weight
+
+            prev = chosen
+
+        label_array = np.array(label_list)
+
+        return label_array
+
+    def _get_label_mapper(self, method: str) -> 'function':
+        """
+        Getter for the function to create a label array depending on the method
+
+        Parameters
+        ----------
+
+        method: {'pseudo_con', 'pure_con'}
+                method for prerandomization of the categories
+
+        Returns
+        -------
+
+        function: _pure_label_mapper or _pseudo_label_mapper
+                  function in charge of creating the label array for the randomization
+        """
+
+        if method == 'pseudo_con':
+            return self._pseudo_label_mapper
+
+        elif method == 'pure_con':
+            return self._pure_label_mapper
+
+    def _label_mapper(self, categories: list, files: list, method: str) -> 'function':
+        """
+        Get parameters and call the correct label mapping function
+
+        Parameters
+        ----------
+
+        categories: list
+                    the length of the list will be used to create the labels for the label
+                    mapper
+
+        files: list
+               the length will be used to know the necessary number for each label in the
+               label mapper
+
+        Returns
+        -------
+
+        label_mapper : function
+                       call to the corresponding label mapping function with the correct parameters
+
+        """
+
+        labels = len(categories)
+        elements = int(len(files) / labels)
+
+        label_mapper = self._get_label_mapper(method)
+        return label_mapper(labels, elements)
+
+    @staticmethod
+    def _within_category_random_map(label_array):
+        """Create array of range(len(label_array)), composed by numbers from 0 to len(label_array).
+
+        The resulting list will preserve the category order of the input, but randomizing within each category.
+        For example, if label_array were to have 10 elements of value 0 and 10 elements of value 1,
+        a random permutation of numbers from 0 to 10 would be assigned where label_array == 0, and a
+        random permutation of numbers from 11 to 20 where label_array == 1
+
+        This function is intended to work with a previously randomized label_array for event designs, but it also
+        can be used on a non-randomized array to ensure different prerandomizations of blocks in blocked designs.
+
+        Parameters
+        ----------
+        label_array: np.array
+                     array of numbers corresponding to different categories
+
+        Returns
+        -------
+        output_list: list
+                     a list containing a random permutation of numbers corresponding to each value of label_array.
+        """
+
+        # Initialize the output list.
+        output_list = np.zeros(len(label_array))
+
+        # Find out the number of categories...
+        cat_num = len(np.unique(label_array))
+
+        # ...and the number of elements for each category.
+        stim_per_cat = int(len(label_array) / cat_num)
+
+        for category in range(cat_num):
+            output_list[label_array == category] = np.random.permutation(
+                range(category * stim_per_cat, (category + 1) *
+                      stim_per_cat))
+
+        output_list = output_list.astype(int)
+
+        return output_list
+
+    @staticmethod
+    def _file_indexer(cat_list, file_list):
+        """Create a dictionary with keys ranging from 0 to len(file_list), which contains the name
+        of the files together with their corresponding category.
+
+        Parameters
+        ----------
+        cat_list: list
+                  contains keys corresponding to an integer for each category, and values
+                  with the name of said category
+
+        file_list: list
+                   names of the files in strings
+
+        Returns
+        -------
+        file_index: dict
+                    keys are numbers ranging from 0, and values are two-element tuples containing the
+                    filename as first value and its corresponding category as second value
+        """
+
+        # Determine the number of elements per category
+        num_files = len(file_list)
+        num_cat = len(cat_list)
+
+        stim_per_cat = int(num_files / num_cat)
+
+        # Create the index
+        file_index = {key: (file_list[key], cat_list[cat]) for cat in range(num_cat)
+                      for key in range(cat * stim_per_cat, (cat + 1) * stim_per_cat)}
+
+        return file_index
+
     def create_prerands(self, prerand_num: int, categories: list or None, method: str) -> None:
         """
         Method to create prerandomizations. The subsets will be csv files containing
@@ -405,7 +671,7 @@ class ExPrerands:
                     names of the categories passed from the ExpStim class, if any
 
         method: {'unconstrained', 'pseudo_con', 'pure_con'}
-                  prerandomization method
+                prerandomization method
 
         Returns
         -------
@@ -419,5 +685,34 @@ class ExPrerands:
             all_stim = [sorted(os.listdir(self.root_path))]
 
         for subset_num, subset in enumerate(all_stim):
-            if not categories or method == 'unconstrained':
-                final_list = sample(subset, len(subset))
+            for prerand in range(prerand_num):
+                if not categories or method == 'unconstrained':
+                    shuffle(subset)
+                    final_list = subset
+
+                else:
+                    label_map = self._label_mapper(categories, subset, method)
+
+                    try:
+                        within_cat_map = self._within_category_random_map(label_map)
+                    except UnboundLocalError as err:
+                        raise ValueError("method argument must be 'pseudo_con' or 'pure_con'") from err
+
+                    file_index = self._file_indexer(categories, subset)
+
+                    final_list = [file_index[number] for number in within_cat_map]
+
+                # Saving to files
+                if self.subsets_path:
+                    prerand_path = os.path.join(self.out_dir,
+                                                'set_' + str(subset_num + 1) + 'prerand_' +
+                                                str(prerand + 1) + '.tsv')
+                else:
+                    prerand_path = os.path.join(self.out_dir,
+                                                'prerand_' + str(prerand + 1) + '.tsv')
+
+                with open(prerand_path, 'w') as csvfile:
+                    prerandwriter = csv.writer(csvfile)
+
+                    for stim in final_list:
+                        prerandwriter.writerow([stim])

@@ -68,8 +68,18 @@ def setup_expsets_cat(setup_cat_dir, request):
 @pytest.fixture(scope='module',
                 params=['parent', 'child'])
 def setup_exprerands_from_subsets(setup_expsets_cat, request):
-    """Create an instance of ExPrerands from subsetsusing mock stim with categories"""
+    """Create an instance of ExPrerands from ExpSets susing mock stim with categories"""
     test_obj = ExPrerands(setup_expsets_cat.root_path, setup_expsets_cat.out_dir, request.param)
+
+    yield test_obj
+
+    shutil.rmtree(test_obj.out_dir)
+
+
+@pytest.fixture(scope='module')
+def setup_exprerands_from_expstim(setup_expstim_cat):
+    """Create an instance of ExPrerands without subsets from ExpStim susing mock stim with categories"""
+    test_obj = ExPrerands(setup_expstim_cat.path, setup_expstim_cat.subsets, 'parent')
 
     yield test_obj
 
