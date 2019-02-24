@@ -7,6 +7,7 @@ Mail: juanjesustorre@gmail.com
 """
 
 import csv
+import glob
 import os
 
 import numpy as np
@@ -377,12 +378,13 @@ class ExPrerands:
 
         parsed_files = []
 
-        subsets = sorted(os.listdir(subsets_path))
+        # subsets = sorted(os.listdir(subsets_path))
+        subsets = glob.glob(os.path.join(subsets_path, '*'))
 
         for subset in subsets:
             subset_path = os.path.join(subsets_path, subset)
 
-            stim = pd.read_table(subset_path, header=None)
+            stim = pd.read_table(subset_path, header=None, engine='python')
             stim_list = [make_tuple(pair) for pair in list(stim[0])]
 
             parsed_files.append(stim_list)
