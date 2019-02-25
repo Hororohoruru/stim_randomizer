@@ -384,8 +384,8 @@ class ExPrerands:
         for subset in subsets:
             subset_path = os.path.join(subsets_path, subset)
 
-            stim = pd.read_table(subset_path, header=None, engine='python')
-            stim_list = [make_tuple(pair) for pair in list(stim[0])]
+            stim_df = pd.read_table(subset_path, header=None, engine='python')
+            stim_list = [stim for stim in stim_df[0]]
 
             parsed_files.append(stim_list)
 
@@ -651,7 +651,7 @@ class ExPrerands:
         stim_per_cat = int(num_files / num_cat)
 
         # Create the index
-        file_index = {key: (file_list[key], cat_list[cat]) for cat in range(num_cat)
+        file_index = {key: file_list[key] for cat in range(num_cat)
                       for key in range(cat * stim_per_cat, (cat + 1) * stim_per_cat)}
 
         return file_index
