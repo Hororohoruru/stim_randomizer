@@ -5,6 +5,7 @@ Author: Juan Jesus Torre Tresols
 Mail: juanjesustorre@gmail.com
 """
 
+import pdb
 import pytest
 
 from stim_randomizer.core import ExpStim, ExpSets, ExPrerands

@@ -13,8 +13,7 @@ import os
 import numpy as np
 import pandas as pd
 
-from random import shuffle, sample, choices
-from ast import literal_eval as make_tuple
+from random import shuffle, choices
 
 
 class ExpStim:
@@ -577,7 +576,7 @@ class ExPrerands:
         """
 
         labels = len(categories)
-        elements = int(len(files) / labels)
+        elements = int(len(files) // labels)
 
         label_mapper = self._get_label_mapper(method)
         return label_mapper(labels, elements)
