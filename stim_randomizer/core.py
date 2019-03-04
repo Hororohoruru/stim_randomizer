@@ -383,7 +383,7 @@ class ExPrerands:
         for subset in subsets:
             subset_path = os.path.join(subsets_path, subset)
 
-            stim_df = pd.read_table(subset_path, header=None, engine='python')
+            stim_df = pd.read_csv(subset_path, header=None, sep='\t', engine='python')
             stim_list = [stim for stim in stim_df[0]]
 
             parsed_files.append(stim_list)
@@ -468,6 +468,20 @@ class ExPrerands:
 
             lst.insert(idx, value)
 
+    @staticmethod
+    def zero_checker(population: list, weights: list):
+        """
+        Checks for any 0 values in weights. If it finds one, it removes it and
+        the corresponding element in population
+        """
+
+        try:
+            zero = weights.index(0)
+            weights.pop(zero)
+            population.pop(zero)
+        except ValueError:
+            pass
+
     def _pure_label_mapper(self, labels: int, elements: int) -> 'np.array':
         """Array of len(labels) * elements length, randomly mapped so two consecutive elements are never of the same
         category (same number).
@@ -504,8 +518,9 @@ class ExPrerands:
         for i in range(labels * elements):
             if prev is not None:
                 # Store the previous value and set its weight to 0 for the next iteration
-                old_weight = weights[prev]
-                weights[prev] = 0
+                if prev in population:
+                    old_weight = weights[population.index(prev)]
+                    weights[population.index(prev)] = 0
 
             try:
                 chosen = choices(population, weights)[0]
@@ -517,11 +532,13 @@ class ExPrerands:
                 break
 
             label_list.append(chosen)
-            weights[chosen] -= 1
+            weights[population.index(chosen)] -= 1
 
             if prev is not None:
                 # Restore weight
-                weights[prev] = old_weight
+                if prev in population:
+                    weights[population.index(prev)] = old_weight
+                self.zero_checker(population, weights)
 
             prev = chosen
 
